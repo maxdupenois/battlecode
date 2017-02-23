@@ -36,6 +36,10 @@ public strictfp class BasicMovement implements MovementInterface {
     this.destination[0] = destination;
   }
 
+  public boolean hasDestination(){
+    return this.destination[0] != null;
+  }
+
   public boolean hasReachedDestination(){
     return this.destination[this.destinationNodePointer] == null;
   }
@@ -77,6 +81,7 @@ public strictfp class BasicMovement implements MovementInterface {
     // we add to if we're blocked and remove from when
     // we hit each point
     if(currentLocation.isWithinDistance(currentDestinationNode, this.closeEnoughDistance)){
+      this.mover.onReachingDestinationNode(currentDestinationNode);
       this.destination[this.destinationNodePointer] = null;
       this.destinationNodePointer = Math.max(0, this.destinationNodePointer - 1);
       if(this.hasReachedDestination()) this.mover.onReachingDestination(currentDestinationNode);
@@ -86,10 +91,9 @@ public strictfp class BasicMovement implements MovementInterface {
     // I can rely on that otherwise the strategy planning becomes difficult
     MapLocation scaledDestination = currentLocation.add(currentDirection, strideRadius);
     if(this.mover.canMove(scaledDestination)) {
-      //TODO: add an envent hook for this
       this.mover.move(scaledDestination);
     } else {
-      //TODO: add an envent hook for this
+      this.mover.onFailingToReachDestinationNode(scaledDestination);
       MapLocation newDestination = null;
       int nextNode = this.destinationNodePointer + 1;
 

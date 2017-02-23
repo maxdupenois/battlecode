@@ -22,6 +22,8 @@ public class BasicMovementTest {
 
     public void onReachingDestination(MapLocation location) {}
     public void onFailingToReachDestination(MapLocation location) {}
+    public void onReachingDestinationNode(MapLocation location) {}
+    public void onFailingToReachDestinationNode(MapLocation location) {}
     public boolean hasMoved() { return false; }
     public boolean canMove(MapLocation loc) {
       MapLocation converted = convertLocation(loc);

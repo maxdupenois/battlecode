@@ -1,4 +1,4 @@
-package maxdupenois.robots;
+package swarming.robots;
 import battlecode.common.*;
 
 public strictfp class Archon extends Robot {

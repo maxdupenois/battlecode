@@ -1,6 +1,6 @@
-package maxdupenois;
+package swarming;
 import battlecode.common.*;
-import maxdupenois.robots.*;
+import swarming.robots.*;
 
 public strictfp class RobotPlayer {
     static RobotController rc;

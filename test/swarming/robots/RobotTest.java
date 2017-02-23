@@ -1,7 +1,7 @@
-package maxdupenois.robots;
+package swarming.robots;
 
 import battlecode.common.*;
-import maxdupenois.robots.Robot;
+import swarming.robots.Robot;
 import static org.junit.Assert.*;
 import org.junit.Test;
 

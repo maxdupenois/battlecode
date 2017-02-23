@@ -15,10 +15,19 @@ public strictfp class BasicMovement implements MovementInterface {
   public BasicMovement(MoverInterface mover){
     this(mover, 10, 5f);
   }
-  public BasicMovement(MoverInterface mover, int maximumNodesToDestination){
+
+  public BasicMovement(
+      MoverInterface mover,
+      int maximumNodesToDestination
+      ){
     this(mover, maximumNodesToDestination, 5f);
   }
-  public BasicMovement(MoverInterface mover, int maximumNodesToDestination, float closeEnoughDistance){
+
+  public BasicMovement(
+      MoverInterface mover,
+      int maximumNodesToDestination,
+      float closeEnoughDistance
+      ){
     this.maximumNodesToDestination = maximumNodesToDestination;
     this.closeEnoughDistance = closeEnoughDistance;
     this.destination = new MapLocation[this.maximumNodesToDestination];
@@ -44,30 +53,22 @@ public strictfp class BasicMovement implements MovementInterface {
     return this.destination[this.destinationNodePointer] == null;
   }
 
-      //senseNearbyRobots, senseNearbyTrees
-      // We might be being blocked, we can't see the whole
-      // map so a proper A* won't really work
-      //
-      //For now we're checking multiple locations, but maybe
-      //sensing would be better
-      //TreeInfo[] trees = this.rc.senseNearbyTrees()
-      //RobotInfo[] robots = this.rc.senseNearbyRobots()
-      //MapLocation[] blockers = new MapLocation[trees.length + robots.length];
-      //for(int i =0; i < trees.length; i++) { blockers[i] = trees[i].getLocation() }
-      //for(int i =0; i < robots.length; i++) { blockers[trees.length + i] = trees[i].getLocation() }
-  //public void printDestinationList(){
-  //  StringBuffer mem = new StringBuffer();
-  //  mem.append("(");
-  //  for(int x =0; x < this.destination.length; x++){
-  //    mem.append(this.destination[x] == null ? "" : this.destination[x].toString());
-  //    mem.append(", ");
-  //  }
-  //  mem.append(")");
-  //  System.out.println("---> Destination List "+mem.toString());
-  //  System.out.println("---> Node Pointer "+this.destinationNodePointer);
-  //}
-
-  //TODO: Refactor out the mid code returns
+  // We can't see enough of the map without prohibitive cost
+  // to do something like A* but we still might be blocked.
+  // This has a pretty naive approach of attempting to move
+  // towards the destination with only small deviations
+  //
+  // For now we're checking multiple locations, but maybe
+  // sensing would be better e.g.
+  // TreeInfo[] trees = this.rc.senseNearbyTrees()
+  // RobotInfo[] robots = this.rc.senseNearbyRobots()
+  // MapLocation[] blockers = new MapLocation[trees.length + robots.length];
+  // for(int i =0; i < trees.length; i++) { blockers[i] = trees[i].getLocation() }
+  // for(int i =0; i < robots.length; i++) { blockers[trees.length + i] = trees[i].getLocation() }
+  //
+  // However for the moment the simple approach seems sensible
+  // TODO: Refactor out the mid code returns, generally clean this
+  // up
   public void continueToDestination() throws GameActionException {
     if(this.hasReachedDestination()) return;
     if(this.mover.hasMoved()) return;
@@ -87,8 +88,10 @@ public strictfp class BasicMovement implements MovementInterface {
       if(this.hasReachedDestination()) this.mover.onReachingDestination(currentDestinationNode);
       return;
     }
-    // The robot controller automagically scales this, but I'm not sure
-    // I can rely on that otherwise the strategy planning becomes difficult
+
+    // The robot controller can automagically scale this,
+    // but I'm not sure I can rely on that otherwise the
+    // strategy planning becomes difficult (as does the testing)
     MapLocation scaledDestination = currentLocation.add(currentDirection, strideRadius);
     if(this.mover.canMove(scaledDestination)) {
       this.mover.move(scaledDestination);
@@ -104,25 +107,27 @@ public strictfp class BasicMovement implements MovementInterface {
         this.mover.onFailingToReachDestination(originalAimedFor);
         return;
       }
-      //
+
       // lets assume I have a direction heading towards my
-      // current destination, currently one of the above is blocking that direction
-      // I need a new location that is not going too far back on myself but is
-      // avoiding these blockers, let's try rotating clockwise and scoring each direction
-      // if there's no blockers then the closer the new direction is to the target then
+      // current destination, currently something is
+      // blocking that direction I need a new location that
+      // is not going too far back on myself but is avoiding
+      // these blockers, let's try rotating clockwise and
+      // scoring each direction
       Direction newDirection;
       MapLocation potentialDestination;
       int maxScore = -1;
       int score;
       int scoreThreshold = 160;
-      int degreeDifference =5;
+      int degreeDifference = 5;
       int degrees = degreeDifference;
       //Bail if we get a 'good enough' score
       while(degrees < 360 && maxScore < scoreThreshold){
         score = 0;
         newDirection = currentDirection.rotateRightDegrees(degrees);
         potentialDestination = currentLocation.add(newDirection, strideRadius);
-        // descending from 0 degrees off, worst at 180, improving again up to 360
+        // descending from 0 degrees off,
+        // worst at 180, improving again up to 360
         // f(x) = abs(180 - x)
         if(this.mover.canMove(potentialDestination)) {
           score = Math.abs(180 - degrees);
@@ -142,12 +147,22 @@ public strictfp class BasicMovement implements MovementInterface {
       } else {
         //irreparably blocked
         MapLocation originalAimedFor = this.destination[0];
-        // clear destination
-        clearDestination();
+        this.clearDestination();
         this.mover.onFailingToReachDestination(originalAimedFor);
       }
     }
   }
 
+  //public void printDestinationList(){
+  //  StringBuffer mem = new StringBuffer();
+  //  mem.append("(");
+  //  for(int x =0; x < this.destination.length; x++){
+  //    mem.append(this.destination[x] == null ? "" : this.destination[x].toString());
+  //    mem.append(", ");
+  //  }
+  //  mem.append(")");
+  //  System.out.println("---> Destination List "+mem.toString());
+  //  System.out.println("---> Node Pointer "+this.destinationNodePointer);
+  //}
 
 }

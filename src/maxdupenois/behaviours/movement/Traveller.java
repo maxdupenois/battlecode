@@ -12,19 +12,19 @@ public strictfp class Traveller {
   private MapLocation[] destination;
   private int destinationNodePointer;
   private TravellerEventInterface eventSubscriber;
-  private RobotController controller;
+  private RobotController robotController;
   private float strideRadius;
 
-  public BasicMovement(
+  public Traveller(
       TravellerEventInterface eventSubscriber,
       RobotController robotController
       ){
     this(eventSubscriber, robotController, 10, 5f);
   }
 
-  public BasicMovement(
+  public Traveller(
       TravellerEventInterface eventSubscriber,
-      RobotController robotController
+      RobotController robotController,
       int maximumNodesToDestination
       ){
 
@@ -36,9 +36,9 @@ public strictfp class Traveller {
       );
   }
 
-  public BasicMovement(
+  public Traveller(
       TravellerEventInterface eventSubscriber,
-      RobotController robotController
+      RobotController robotController,
       int maximumNodesToDestination,
       float closeEnoughDistance
       ){
@@ -88,7 +88,7 @@ public strictfp class Traveller {
   public void continueToDestination() throws GameActionException {
     if(this.hasReachedDestination()) return;
     if(this.robotController.hasMoved()) return;
-    MapLocation currentLocation = this.robotController.getCurrentLocation();
+    MapLocation currentLocation = this.robotController.getLocation();
     MapLocation currentDestinationNode = this.destination[this.destinationNodePointer];
 
     Direction currentDirection = currentLocation.directionTo(currentDestinationNode);

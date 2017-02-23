@@ -1,5 +1,5 @@
 package swarming.robots;
-import maxdupenois.behaviours.movement.BasicMovement;
+import maxdupenois.behaviours.movement.SimpleMovementBehaviour;
 import battlecode.common.*;
 
 public strictfp class Gardener extends Robot {

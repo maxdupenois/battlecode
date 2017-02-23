@@ -1,4 +1,8 @@
 package maxdupenois.behaviours.movement;
+import battlecode.common.MapLocation;
+import battlecode.common.RobotController;
+import battlecode.common.GameActionException;
+import battlecode.common.Direction;
 
 //The most basic form of movement behaviour,
 //does noting with hooks, simply uses a traveller
@@ -20,16 +24,21 @@ public strictfp class SimpleMovementBehaviour implements MovementInterface, Trav
       // is that our coordinates are in it, don't believe
       // we can even guarantee that there's a (0, 0) and hence
       // a bounding box we can use.
-      traveller.setDestination(
-          this.robotController.getCurrentLocation().add(
-            new Direction(
-              (float)Math.random() * 2 * (float)Math.PI
-              ),
-            50
-            )
-          )
+      Direction dir = new Direction(
+          (float)Math.random() * 2 * (float)Math.PI
+          );
+      MapLocation newLocation = this.
+        robotController.
+        getLocation().
+        add(dir, 50f);
+      traveller.setDestination(newLocation);
     }
-    traveller.continueToDestination();
+    try {
+      traveller.continueToDestination();
+    } catch (GameActionException ex) {
+      System.err.println(ex.getMessage());
+      //TODO: Consider where you actually want to catch this
+    }
   }
 
   // Movement Interface methods

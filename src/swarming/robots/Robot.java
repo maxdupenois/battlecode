@@ -1,9 +1,8 @@
 package swarming.robots;
-import maxdupenois.behaviours.movement.MoverInterface;
 import maxdupenois.behaviours.movement.MovementInterface;
 import battlecode.common.*;
 
-public abstract strictfp class Robot implements MoverInterface{
+public abstract strictfp class Robot {
   protected RobotController rc;
   protected MapLocation currentLocation;
   protected RobotType type;

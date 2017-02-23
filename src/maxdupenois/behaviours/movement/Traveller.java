@@ -2,29 +2,43 @@ package maxdupenois.behaviours.movement;
 import battlecode.common.MapLocation;
 import battlecode.common.Direction;
 import battlecode.common.GameActionException;
+import battlecode.common.RobotController;
 
-public strictfp class BasicMovement implements MovementInterface {
+public strictfp class Traveller {
   private float closeEnoughDistance;
   //Maximum diversions we'll allow us to take to get
   //to a location
   private int maximumNodesToDestination;
   private MapLocation[] destination;
   private int destinationNodePointer;
-  private MoverInterface mover;
+  private TravellerEventInterface eventSubscriber;
+  private RobotController controller;
+  private float strideRadius;
 
-  public BasicMovement(MoverInterface mover){
-    this(mover, 10, 5f);
+  public BasicMovement(
+      TravellerEventInterface eventSubscriber,
+      RobotController robotController
+      ){
+    this(eventSubscriber, robotController, 10, 5f);
   }
 
   public BasicMovement(
-      MoverInterface mover,
+      TravellerEventInterface eventSubscriber,
+      RobotController robotController
       int maximumNodesToDestination
       ){
-    this(mover, maximumNodesToDestination, 5f);
+
+    this(
+      eventSubscriber,
+      robotController,
+      maximumNodesToDestination,
+      5f
+      );
   }
 
   public BasicMovement(
-      MoverInterface mover,
+      TravellerEventInterface eventSubscriber,
+      RobotController robotController
       int maximumNodesToDestination,
       float closeEnoughDistance
       ){
@@ -32,7 +46,9 @@ public strictfp class BasicMovement implements MovementInterface {
     this.closeEnoughDistance = closeEnoughDistance;
     this.destination = new MapLocation[this.maximumNodesToDestination];
     this.destinationNodePointer = 0;
-    this.mover = mover;
+    this.eventSubscriber = eventSubscriber;
+    this.robotController = robotController;
+    this.strideRadius = this.robotController.getType().strideRadius;
   }
 
   public void clearDestination(){
@@ -71,32 +87,31 @@ public strictfp class BasicMovement implements MovementInterface {
   // up
   public void continueToDestination() throws GameActionException {
     if(this.hasReachedDestination()) return;
-    if(this.mover.hasMoved()) return;
-    MapLocation currentLocation = this.mover.getCurrentLocation();
+    if(this.robotController.hasMoved()) return;
+    MapLocation currentLocation = this.robotController.getCurrentLocation();
     MapLocation currentDestinationNode = this.destination[this.destinationNodePointer];
 
     Direction currentDirection = currentLocation.directionTo(currentDestinationNode);
-    float strideRadius = this.mover.getStrideRadius();
 
     // The destination is basically a queue that
     // we add to if we're blocked and remove from when
     // we hit each point
     if(currentLocation.isWithinDistance(currentDestinationNode, this.closeEnoughDistance)){
-      this.mover.onReachingDestinationNode(currentDestinationNode);
+      this.eventSubscriber.onReachingDestinationNode(currentDestinationNode);
       this.destination[this.destinationNodePointer] = null;
       this.destinationNodePointer = Math.max(0, this.destinationNodePointer - 1);
-      if(this.hasReachedDestination()) this.mover.onReachingDestination(currentDestinationNode);
+      if(this.hasReachedDestination()) this.eventSubscriber.onReachingDestination(currentDestinationNode);
       return;
     }
 
     // The robot controller can automagically scale this,
     // but I'm not sure I can rely on that otherwise the
     // strategy planning becomes difficult (as does the testing)
-    MapLocation scaledDestination = currentLocation.add(currentDirection, strideRadius);
-    if(this.mover.canMove(scaledDestination)) {
-      this.mover.move(scaledDestination);
+    MapLocation scaledDestination = currentLocation.add(currentDirection, this.strideRadius);
+    if(this.robotController.canMove(scaledDestination)) {
+      this.robotController.move(scaledDestination);
     } else {
-      this.mover.onFailingToReachDestinationNode(scaledDestination);
+      this.eventSubscriber.onFailingToReachDestinationNode(scaledDestination);
       MapLocation newDestination = null;
       int nextNode = this.destinationNodePointer + 1;
 
@@ -104,7 +119,7 @@ public strictfp class BasicMovement implements MovementInterface {
       if(nextNode >= this.maximumNodesToDestination){
         MapLocation originalAimedFor = this.destination[0];
         this.clearDestination();
-        this.mover.onFailingToReachDestination(originalAimedFor);
+        this.eventSubscriber.onFailingToReachDestination(originalAimedFor);
         return;
       }
 
@@ -125,11 +140,11 @@ public strictfp class BasicMovement implements MovementInterface {
       while(degrees < 360 && maxScore < scoreThreshold){
         score = 0;
         newDirection = currentDirection.rotateRightDegrees(degrees);
-        potentialDestination = currentLocation.add(newDirection, strideRadius);
+        potentialDestination = currentLocation.add(newDirection, this.strideRadius);
         // descending from 0 degrees off,
         // worst at 180, improving again up to 360
         // f(x) = abs(180 - x)
-        if(this.mover.canMove(potentialDestination)) {
+        if(this.robotController.canMove(potentialDestination)) {
           score = Math.abs(180 - degrees);
         } else {
           score = -1;
@@ -148,7 +163,7 @@ public strictfp class BasicMovement implements MovementInterface {
         //irreparably blocked
         MapLocation originalAimedFor = this.destination[0];
         this.clearDestination();
-        this.mover.onFailingToReachDestination(originalAimedFor);
+        this.eventSubscriber.onFailingToReachDestination(originalAimedFor);
       }
     }
   }

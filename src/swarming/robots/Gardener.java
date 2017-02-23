@@ -5,8 +5,7 @@ import battlecode.common.*;
 public strictfp class Gardener extends Robot {
   public Gardener(RobotController rc){
     super(rc);
-    setMovementBehaviour(new BasicMovement(this, 20));
-    getMovementBehaviour().setDestination(new MapLocation(175, 175));
+    setMovementBehaviour(new SimpleMovementBehaviour(rc));
   }
 
   // For this version a garderner has three main goals

@@ -38,8 +38,8 @@ public abstract strictfp class Robot implements MoverInterface{
     int remainingBytecodes;
     while(true) {
       this.currentLocation = this.rc.getLocation();
-      if(this.movementBehaviour.hasDestination() && !this.movementBehaviour.hasReachedDestination()){
-        this.movementBehaviour.continueToDestination();
+      if(this.hasMovementBehaviour()){
+        this.movementBehaviour.move();
       }
       remainingBytecodes = Clock.getBytecodesLeft();
       if(remainingBytecodes > 0){
@@ -53,38 +53,4 @@ public abstract strictfp class Robot implements MoverInterface{
 
   void takeTurn(int round, int remainingBytecodes) throws GameActionException {}
 
-  // Movement Interface methods
-  public void onReachingDestination(MapLocation destination) {}
-  public void onFailingToReachDestination(MapLocation destination) {}
-  public void onReachingDestinationNode(MapLocation destination) {}
-  public void onFailingToReachDestinationNode(MapLocation destination) {}
-
-  public float getStrideRadius(){
-    return this.type.strideRadius;
-  }
-
-  public MapLocation getCurrentLocation(){
-    return this.currentLocation;
-  }
-
-  public boolean hasMoved(){
-    return this.rc.hasMoved();
-  }
-
-  public boolean canMove(MapLocation location){
-    return this.rc.canMove(location);
-  }
-
-  public void move(MapLocation location){
-    try {
-      this.rc.move(location);
-    } catch(GameActionException ex){
-      //TODO: Not sure if I want to catch this here, have a think
-      System.err.println(ex.getMessage());
-    }
-  }
-
-  public Direction randomDirection() {
-    return new Direction((float)Math.random() * 2 * (float)Math.PI);
-  }
 }

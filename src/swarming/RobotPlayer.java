@@ -19,6 +19,9 @@ public strictfp class RobotPlayer {
         case ARCHON:
           robot = new Archon(rc);
           break;
+        case SCOUT:
+          robot = new Scout(rc);
+          break;
         case GARDENER:
           robot = new Gardener(rc);
           break;

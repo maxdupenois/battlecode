@@ -34,7 +34,6 @@ public strictfp class SimpleRandomMovementBehaviour implements MovementInterface
         robotController.
         getLocation().
         add(dir, distance);
-      System.out.println("NEW DESTINATION "+newLocation);
       traveller.setDestination(newLocation);
     }
     try {

@@ -5,7 +5,7 @@ import battlecode.common.*;
 public strictfp class Gardener extends Robot {
   public Gardener(RobotController rc){
     super(rc);
-    setMovementBehaviour(new SimpleRandomMovementBehaviour(rc, 100f));
+    setMovementBehaviour(new SimpleRandomMovementBehaviour(rc, 20f));
   }
 
   // For this version a garderner has three main goals
@@ -13,5 +13,17 @@ public strictfp class Gardener extends Robot {
   // to act as a swarm, farm and build a wall to protect the archon
   // We'll tackle the wall last as we don't want to prevent archons from being able to spawn gardeners
   void takeTurn(int round, int remainingBytecodes) throws GameActionException {
+    try {
+      Direction dir = new Direction(
+          (float)Math.random() * 2 * (float)Math.PI
+          );
+      if(this.rc.isBuildReady() && this.rc.canBuildRobot(RobotType.SCOUT, dir)){
+        this.rc.buildRobot(RobotType.SCOUT, dir);
+      }
+    } catch (GameActionException ex) {
+        System.out.println("ERROR");
+      //Do not let an archon die!
+      System.err.println(ex.getMessage());
+    }
   }
 }

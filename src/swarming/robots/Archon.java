@@ -5,7 +5,7 @@ import maxdupenois.behaviours.movement.PatrolMovementBehaviour;
 public strictfp class Archon extends Robot {
   public Archon(RobotController rc){
     super(rc);
-    setMovementBehaviour(new PatrolMovementBehaviour(rc, 50f));
+    setMovementBehaviour(new PatrolMovementBehaviour(rc, 20f));
   }
 
   //Archon's Strategy should be split between building

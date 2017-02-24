@@ -30,7 +30,8 @@ public strictfp class SimpleMovementBehaviour implements MovementInterface, Trav
       MapLocation newLocation = this.
         robotController.
         getLocation().
-        add(dir, 50f);
+        add(dir, 100f);
+      System.out.println("Heading to "+newLocation.toString());
       traveller.setDestination(newLocation);
     }
     try {

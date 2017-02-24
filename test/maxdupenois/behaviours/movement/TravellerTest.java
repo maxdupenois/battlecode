@@ -15,27 +15,55 @@ public class TravellerTest {
   public void initialize(){
     robotController = new DummyController(new int[][]{
       new int[]{ 0, 0, 0, 0, 0 },
-      new int[]{ 0, 1, 0, 0, 0 },
-      new int[]{ 0, 1, 1, 0, 0 },
+      new int[]{ 0, 1, 0, 1, 0 },
+      new int[]{ 0, 1, 1, 1, 0 },
       new int[]{ 0, 0, 0, 0, 0 },
       new int[]{ 0, 0, 0, 0, 0 },
-    }, new MapLocation(0, 0));
-    endDestination = new MapLocation(4, 4);
+    }, new MapLocation(2, 1));
     eventSubscriber = new DummyTravellerSubscriber();
     traveller = new Traveller(
         eventSubscriber, robotController, 20, 0.9f
         );
-    traveller.setDestination(endDestination);
     // Enough to go diagonally but not
     // jump a square
-    traveller.setStrideRadius(1.5f);
+    traveller.setStrideRadius(1.49f);
   }
 
   @Test
   public void testPathFinding(){
+    endDestination = new MapLocation(4, 4);
+    traveller.setDestination(endDestination);
+    traveller.debugOff();
 
+    runJourney();
+    //debugPrintMaps();
+    // We should end up where we want to be
+    assertEquals(endDestination, robotController.getLocation());
+  }
+
+  @Test
+  public void testMapBoundaryFinding(){
+    endDestination = new MapLocation(5, 0);
+    traveller.setDestination(endDestination);
+    traveller.debugOff();
+
+    runJourney();
+
+    //We should have a failed location that is the
+    //same as our attempted end destination
+    assertEquals(endDestination, eventSubscriber.getFailedLocation());
+  }
+
+  private void debugPrintMaps(){
+    String[] maps = robotController.getPrintableMaps();
+    for(int i=0; i<maps.length; i++){
+      System.out.println(maps[i]);
+    }
+  }
+
+  private void runJourney(){
     //Just ensure we don't loop eternally
-    int counter = 10;
+    int counter = 30;
     while(!traveller.hasReachedDestination() && counter > 0){
       try {
         traveller.continueToDestination();
@@ -44,13 +72,5 @@ public class TravellerTest {
       }
       counter--;
     }
-
-    //String[] maps = robotController.getPrintableMaps();
-    //for(int i=0; i<maps.length; i++){
-    //  System.out.println(maps[i]);
-    //}
-
-    // We should end up where we want to be
-    assertEquals(endDestination, robotController.getLocation());
   }
 }

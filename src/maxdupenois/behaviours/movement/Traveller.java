@@ -51,6 +51,12 @@ public strictfp class Traveller {
     this.strideRadius = this.robotController.getType().strideRadius;
   }
 
+  // Used in testing so we're not beholden to
+  // an actual robot type's radius
+  public void setStrideRadius(float strideRadius){
+    this.strideRadius = strideRadius;
+  }
+
   public void clearDestination(){
     setDestination(null);
   }
@@ -96,10 +102,13 @@ public strictfp class Traveller {
     // The destination is basically a queue that
     // we add to if we're blocked and remove from when
     // we hit each point
-    if(currentLocation.isWithinDistance(currentDestinationNode, this.closeEnoughDistance)){
+    float distance = currentLocation.distanceTo(currentDestinationNode);
+    boolean withinDistance = currentLocation.isWithinDistance(currentDestinationNode, this.closeEnoughDistance);
+    if(withinDistance){
       this.eventSubscriber.onReachingDestinationNode(currentDestinationNode);
       this.destination[this.destinationNodePointer] = null;
       this.destinationNodePointer = Math.max(0, this.destinationNodePointer - 1);
+
       if(this.hasReachedDestination()) this.eventSubscriber.onReachingDestination(currentDestinationNode);
       return;
     }
@@ -107,7 +116,13 @@ public strictfp class Traveller {
     // The robot controller can automagically scale this,
     // but I'm not sure I can rely on that otherwise the
     // strategy planning becomes difficult (as does the testing)
-    MapLocation scaledDestination = currentLocation.add(currentDirection, this.strideRadius);
+    MapLocation scaledDestination;
+    //Only scale if the distance is greater than the stride
+    if(currentLocation.distanceTo(currentDestinationNode) > this.strideRadius) {
+      scaledDestination = currentLocation.add(currentDirection, this.strideRadius);
+    } else {
+      scaledDestination = currentDestinationNode;
+    }
     if(this.robotController.canMove(scaledDestination)) {
       this.robotController.move(scaledDestination);
     } else {

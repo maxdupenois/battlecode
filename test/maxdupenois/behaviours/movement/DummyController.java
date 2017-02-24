@@ -18,10 +18,10 @@ public strictfp class DummyController implements RobotController {
   public boolean canMove(MapLocation loc) {
     MapLocation converted = convertLocation(loc);
     //On map
-    if(loc.y < 0) return false;
-    if(loc.y >= this.map.length) return false;
-    if(loc.x < 0) return false;
-    if(loc.x >= this.map[0].length) return false;
+    if(converted.y < 0) return false;
+    if(converted.y >= this.map.length) return false;
+    if(converted.x < 0) return false;
+    if(converted.x >= this.map[0].length) return false;
 
     return (map[(int)converted.y][(int)converted.x] != 1);
   }

@@ -1,11 +1,11 @@
 package swarming.robots;
-import maxdupenois.behaviours.movement.SimpleMovementBehaviour;
+import maxdupenois.behaviours.movement.SimpleRandomMovementBehaviour;
 import battlecode.common.*;
 
 public strictfp class Gardener extends Robot {
   public Gardener(RobotController rc){
     super(rc);
-    setMovementBehaviour(new SimpleMovementBehaviour(rc));
+    setMovementBehaviour(new SimpleRandomMovementBehaviour(rc, 100f));
   }
 
   // For this version a garderner has three main goals

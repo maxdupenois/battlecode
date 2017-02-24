@@ -7,13 +7,15 @@ import battlecode.common.Direction;
 //The most basic form of movement behaviour,
 //does noting with hooks, simply uses a traveller
 //to head to a location
-public strictfp class SimpleMovementBehaviour implements MovementInterface, TravellerEventInterface {
+public strictfp class SimpleRandomMovementBehaviour implements MovementInterface, TravellerEventInterface {
   private Traveller traveller;
   private RobotController robotController;
+  private float range;
 
-  public SimpleMovementBehaviour(RobotController robotController){
+  public SimpleRandomMovementBehaviour(RobotController robotController, float range){
     this.traveller = new Traveller(this, robotController);
     this.robotController = robotController;
+    this.range =range;
   }
 
   public void move(){
@@ -27,11 +29,12 @@ public strictfp class SimpleMovementBehaviour implements MovementInterface, Trav
       Direction dir = new Direction(
           (float)Math.random() * 2 * (float)Math.PI
           );
+      float distance = (float)Math.random() * this.range;
       MapLocation newLocation = this.
         robotController.
         getLocation().
-        add(dir, 100f);
-      System.out.println("Heading to "+newLocation.toString());
+        add(dir, distance);
+      System.out.println("NEW DESTINATION "+newLocation);
       traveller.setDestination(newLocation);
     }
     try {

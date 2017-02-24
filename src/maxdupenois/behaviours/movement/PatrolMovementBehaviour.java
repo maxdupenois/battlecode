@@ -39,12 +39,10 @@ public strictfp class PatrolMovementBehaviour implements MovementInterface, Trav
   public void move(){
     if(!traveller.hasDestination() || traveller.hasReachedDestination()){
       this.changeDirection();
-      System.out.println("\nDirection Change: "+this.currentDirection().toString());
       MapLocation newLocation = this.
         robotController.
         getLocation().
         add(this.currentDirection(), this.range);
-      System.out.println("Heading To: "+newLocation.toString());
       traveller.setDestination(newLocation);
     }
     try {

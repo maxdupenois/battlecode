@@ -83,6 +83,7 @@ public strictfp class Traveller {
     this.destination = new MapLocation[this.maximumNodesToDestination];
     this.destinationNodePointer = 0;
     this.destination[0] = destination;
+    this.locationHistory.clear();
   }
 
   public boolean hasDestination(){

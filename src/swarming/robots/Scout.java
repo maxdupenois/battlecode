@@ -1,6 +1,7 @@
 package swarming.robots;
 import maxdupenois.behaviours.movement.SimpleRandomMovementBehaviour;
 import maxdupenois.behaviours.movement.PatrolMovementBehaviour;
+import maxdupenois.behaviours.movement.BoidMovementBehaviour;
 import battlecode.common.*;
 
 public strictfp class Scout extends Robot {
@@ -8,11 +9,12 @@ public strictfp class Scout extends Robot {
   public Scout(RobotController rc){
     super(rc);
     this.team = rc.getTeam();
-    if(Math.random() >= 0.5){
-      setMovementBehaviour(new SimpleRandomMovementBehaviour(rc, 30f));
-    } else {
-      setMovementBehaviour(new PatrolMovementBehaviour(rc, 40f));
-    }
+    setMovementBehaviour(new BoidMovementBehaviour(rc, RobotType.SCOUT, 30f));
+    //if(Math.random() >= 0.5){
+    //  setMovementBehaviour(new SimpleRandomMovementBehaviour(rc, 30f));
+    //} else {
+    //  setMovementBehaviour(new PatrolMovementBehaviour(rc, 40f));
+    //}
   }
 
   // SCOUTS! :)

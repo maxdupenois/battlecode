@@ -3,6 +3,7 @@ import maxdupenois.behaviours.movement.SimpleRandomMovementBehaviour;
 import battlecode.common.*;
 
 public strictfp class Gardener extends Robot {
+  private int scouts = 0;
   public Gardener(RobotController rc){
     super(rc);
     setMovementBehaviour(new SimpleRandomMovementBehaviour(rc, 20f));
@@ -17,8 +18,9 @@ public strictfp class Gardener extends Robot {
       Direction dir = new Direction(
           (float)Math.random() * 2 * (float)Math.PI
           );
-      if(this.rc.isBuildReady() && this.rc.canBuildRobot(RobotType.SCOUT, dir)){
+      if(scouts < 5 && this.rc.isBuildReady() && this.rc.canBuildRobot(RobotType.SCOUT, dir)){
         this.rc.buildRobot(RobotType.SCOUT, dir);
+        scouts ++;
       }
     } catch (GameActionException ex) {
         System.out.println("ERROR");

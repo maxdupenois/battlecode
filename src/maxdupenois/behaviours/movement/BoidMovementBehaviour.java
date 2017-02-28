@@ -31,13 +31,20 @@ public strictfp class BoidMovementBehaviour implements MovementInterface, Travel
   private RobotType groupingType;
   private Team team;
   // Avoid crowding
-  private float separation = 0.5f;
+  private float separation = 0.3f;
   // same direction
-  private float alignment = 0.5f;
+  private float alignment = 0.3f;
   // head towards center of mass
-  private float cohesion = 0.2f;
+  private float cohesion = 0.4f;
+  //private MapLocation destinationOffOfMap = null;
 
   private Map<Integer, MapLocation> previousCompanionLocations;
+  private MapLocation previousLocation;
+  private int stuckCount;
+  private int clearStuckCount;
+  private static int MAX_STUCK_COUNT=2;
+  private static int MOVES_TO_CLEAR_BEING_STUCK = 4;
+
 
   public BoidMovementBehaviour(RobotController robotController, RobotType groupingType, float range){
     this.traveller = new Traveller(this, robotController);
@@ -46,20 +53,13 @@ public strictfp class BoidMovementBehaviour implements MovementInterface, Travel
     this.team = robotController.getTeam();
     this.range = range;
     this.previousCompanionLocations = new HashMap<Integer, MapLocation>();
+    this.stuckCount = 0;
+    this.clearStuckCount = 0;
   }
 
-  //This should hopefully bounce us away from the map
-  //edge
   public void onMapBoundaryFound(MapLocation destination) {
-    MapLocation location = robotController.getLocation();
-    Direction dir = location.directionTo(destination);
-    // Shouldn't ever be null here so won't check for it
-    MapLocation newDestination = location.add(dir.opposite(), this.range);
-    System.out.println("CURRENT: "+location.toString()+" DIRECTION: "+dir.getAngleDegrees()+" OPPOSITE: "+dir.opposite().getAngleDegrees()+" NEW: "+newDestination.toString());
-    //this.robotController.setIndicatorLine(location, newDestination, 0, 255, 0);
-    //System.out.println("BOUNCE");
-    this.traveller = new Traveller(this, robotController);
-    this.traveller.setDestination(newDestination);
+    //Force being stuck
+    this.stuckCount = MAX_STUCK_COUNT;
   }
 
   public void move(){
@@ -68,10 +68,34 @@ public strictfp class BoidMovementBehaviour implements MovementInterface, Travel
     if(this.traveller.hasDestination()){
       this.robotController.setIndicatorLine(currentLocation, this.traveller.getDestination(), 0, 255, 0);
     }
-    if(companions.length == 0){
-      // Continue if we already have a destination
-      if(!traveller.hasDestination()) moveToRandomLocation();
-    } else {
+
+    if(previousLocation != null && previousLocation.isWithinDistance(currentLocation, 1f)){
+      stuckCount++;
+    }
+
+    //Main logic switch, needs
+    //to be refactored to be clearer
+    if(clearStuckCount > 0){
+      clearStuckCount --;
+      //continue on to previous destination
+    } else if(stuckCount >= MAX_STUCK_COUNT) {
+      //Bounce!
+      Direction dir = currentLocation.directionTo(this.traveller.getDestination());
+      if(dir == null){
+        moveToRandomLocation();
+      } else {
+        MapLocation newDestination = currentLocation.add(dir.opposite(), this.range);
+        this.traveller.setDestination(newDestination);
+      }
+      this.stuckCount = 0;
+      // After identifying that we're stuck
+      // we need to have a bit of time allowed
+      // to move us away, otherwise we'll regroup
+      // and get stuck on the wall again
+      this.clearStuckCount = MOVES_TO_CLEAR_BEING_STUCK;
+    } else if(!this.traveller.hasDestination() && companions.length == 0){
+      moveToRandomLocation();
+    } else if(companions.length > 0) {
       // Will need a better base direction
       Direction dir = null;
       // directionTo returns null if the the current location
@@ -91,7 +115,9 @@ public strictfp class BoidMovementBehaviour implements MovementInterface, Travel
       MapLocation loc = this.robotController.getLocation();
       traveller.setDestination(loc.add(dir, this.range));
     }
-    robotController.setIndicatorLine(currentLocation, traveller.getDestination(), 0, 0, 255);
+    if(traveller.hasDestination()){
+      robotController.setIndicatorLine(currentLocation, traveller.getDestination(), 0, 0, 255);
+    }
 
     try {
       traveller.continueToDestination();
@@ -106,6 +132,7 @@ public strictfp class BoidMovementBehaviour implements MovementInterface, Travel
           (Map<Integer, MapLocation> map, RobotInfo ri) -> map.put(ri.ID, ri.getLocation()),
           (Map<Integer, MapLocation> a, Map<Integer, MapLocation> b) -> {}
           );
+    this.previousLocation = currentLocation;
   }
 
   private Direction modifyDirection(Direction original, Direction target, float amount){

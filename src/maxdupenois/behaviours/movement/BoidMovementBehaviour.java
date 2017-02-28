@@ -31,11 +31,17 @@ public strictfp class BoidMovementBehaviour implements MovementInterface, Travel
   private RobotType groupingType;
   private Team team;
   // Avoid crowding
-  private float separation = 0.3f;
-  // same direction
-  private float alignment = 0.3f;
+  private float separation = 0.5f;
   // head towards center of mass
-  private float cohesion = 0.4f;
+  private float cohesion = 0.5f;
+  // same direction
+  private float alignment = 0.2f;
+
+  //At maximum range we have full cohesion no separation
+  //at minimum range we have full separation no cohesion
+  private float[] cohesionToSeparationRange = new float[]{
+    5f, 20f
+  };
   //private MapLocation destinationOffOfMap = null;
 
   private Map<Integer, MapLocation> previousCompanionLocations;
@@ -43,7 +49,7 @@ public strictfp class BoidMovementBehaviour implements MovementInterface, Travel
   private int stuckCount;
   private int clearStuckCount;
   private static int MAX_STUCK_COUNT=2;
-  private static int MOVES_TO_CLEAR_BEING_STUCK = 4;
+  private static int MOVES_TO_CLEAR_BEING_STUCK = 6;
 
 
   public BoidMovementBehaviour(RobotController robotController, RobotType groupingType, float range){
@@ -151,17 +157,52 @@ public strictfp class BoidMovementBehaviour implements MovementInterface, Travel
   //Try to avoid crowding companions/flockmates
   private Direction applySeparation(Direction dir, RobotInfo[] companions) {
     MapLocation loc = this.robotController.getLocation();
-    Direction toLocalCompanions = loc.directionTo(meanLocation(companions));
+    MapLocation centreOfMass = meanLocation(companions);
+    Direction toLocalCompanions = loc.directionTo(centreOfMass);
     if(toLocalCompanions == null) return dir;
-    return modifyDirection(dir, toLocalCompanions.opposite(), separation);
+    float distance = loc.distanceTo(centreOfMass);
+    float minRange = cohesionToSeparationRange[0];
+    float maxRange = cohesionToSeparationRange[1];
+    //separation scales from the full amount at min range
+    //to 0 at max range
+    //S = separation, M_0 = min range, M_1 max range
+    //f(d) = S * (1 - MIN(MAX(d - M_0, 0), M_1 - M_0)/(M_1 - M_0))
+    //e.g. range = [2, 12]
+    //S = 0.5
+    //d = 2
+    //f(2) = 0.5 * (1 - MAX(2 - 2, 0)/(12 - 2))
+    //f(2) = 0.5 * (1 - 0/10)
+    //f(2) = 0.5
+    //d = 12
+    //f(12) = 0.5 * (1 - MAX(12 - 2, 0)/(12 - 2))
+    //f(12) = 0.5 * (1 - 10/10)
+    //f(12) = 0
+    //f(7) = 0.5 * (1 - 5/10)
+    //f(7) = 0.25
+    float rangeDifference = maxRange - minRange;
+    float distanceWithinRange = Math.min(Math.max(distance - minRange, 0), rangeDifference);
+    float actualSep = separation * (1 - distanceWithinRange/rangeDifference);
+
+    return modifyDirection(dir, toLocalCompanions.opposite(), actualSep);
   }
 
   //Try to move towards the centre of mass of companions/flockmates
   private Direction applyCohesion(Direction dir, RobotInfo[] companions){
     MapLocation loc = this.robotController.getLocation();
-    Direction toLocalCompanions = loc.directionTo(meanLocation(companions));
+    MapLocation centreOfMass = meanLocation(companions);
+    Direction toLocalCompanions = loc.directionTo(centreOfMass);
     if(toLocalCompanions == null) return dir;
-    return modifyDirection(dir, toLocalCompanions, cohesion);
+    float minRange = cohesionToSeparationRange[0];
+    float maxRange = cohesionToSeparationRange[1];
+    float distance = loc.distanceTo(centreOfMass);
+    //cohesion scales from the 0 at min range
+    //to full amount at max range
+    //C = cohesion, M_0 = min range, M_1 max range
+    //f(d) = C * MIN(MAX(d - M_0, 0), M_1 - M_0)/(M_1 - M_0))
+    float rangeDifference = maxRange - minRange;
+    float distanceWithinRange = Math.min(Math.max(distance - minRange, 0), rangeDifference);
+    float actualCoh = cohesion * (distanceWithinRange/rangeDifference);
+    return modifyDirection(dir, toLocalCompanions, actualCoh);
   }
 
   //Try to go in the same direction as companions/flockmates

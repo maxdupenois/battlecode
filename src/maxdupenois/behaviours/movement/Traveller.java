@@ -75,6 +75,10 @@ public strictfp class Traveller {
     this.showDebug = true;
   }
 
+  public MapLocation getDestination(){
+    return this.destination[0];
+  }
+
   public void clearDestination(){
     setDestination(null);
   }
@@ -141,9 +145,9 @@ public strictfp class Traveller {
   }
 
   private void findNewNode(
-      MapLocation currentLocation, MapLocation scaledDestination, Direction currentDirection){
+      MapLocation currentLocation, MapLocation scaledDestination, Direction currentDirection) throws GameActionException{
     this.eventSubscriber.onFailingToReachDestinationNode(scaledDestination);
-    //if(!this.robotController.onTheMap(scaledDestination)) this.eventSubscriber.onMapBoundaryFound(scaledDestination);
+    if(!this.robotController.onTheMap(scaledDestination)) this.eventSubscriber.onMapBoundaryFound(scaledDestination);
     MapLocation newDestination = null;
     int nextNode = this.destinationNodePointer + 1;
 

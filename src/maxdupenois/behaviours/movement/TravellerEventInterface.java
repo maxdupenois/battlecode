@@ -9,4 +9,5 @@ public interface TravellerEventInterface {
   // used when we're part way through a movement
   void onReachingDestinationNode(MapLocation location);
   void onFailingToReachDestinationNode(MapLocation location);
+  void onMapBoundaryFound(MapLocation location);
 }

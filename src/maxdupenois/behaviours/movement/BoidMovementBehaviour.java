@@ -31,11 +31,11 @@ public strictfp class BoidMovementBehaviour implements MovementInterface, Travel
   private RobotType groupingType;
   private Team team;
   // Avoid crowding
-  private float separation = 0.3f;
+  private float separation = 0.5f;
   // same direction
-  private float alignment = 0.8f;
+  private float alignment = 0.5f;
   // head towards center of mass
-  private float cohesion = 0.5f;
+  private float cohesion = 0.2f;
 
   private Map<Integer, MapLocation> previousCompanionLocations;
 
@@ -48,63 +48,57 @@ public strictfp class BoidMovementBehaviour implements MovementInterface, Travel
     this.previousCompanionLocations = new HashMap<Integer, MapLocation>();
   }
 
-  private class MapCollector implements Collector<RobotInfo, Map<Integer, MapLocation>, Map<Integer, MapLocation>> {
-    public Supplier<Map<Integer, MapLocation>> supplier(){
-      return () -> new HashMap<Integer, MapLocation>();
-    }
-
-    public BiConsumer<Map<Integer, MapLocation>, RobotInfo> accumulator(){
-      return (map, ri) -> map.put(ri.ID, ri.getLocation());
-    }
-
-    public BinaryOperator<Map<Integer, MapLocation>> combiner(){
-      return (a, b) -> a;
-    }
-
-    public Function<Map<Integer, MapLocation>, Map<Integer, MapLocation>> finisher(){
-      return (a) -> a;
-    }
-
-    public Set<Collector.Characteristics> characteristics(){
-      Set<Collector.Characteristics> set = new HashSet<Collector.Characteristics>();
-      set.add(Collector.Characteristics.UNORDERED);
-      return set;
-    }
+  //This should hopefully bounce us away from the map
+  //edge
+  public void onMapBoundaryFound(MapLocation destination) {
+    MapLocation location = robotController.getLocation();
+    Direction dir = location.directionTo(destination);
+    // Shouldn't ever be null here so won't check for it
+    MapLocation newDestination = location.add(dir.opposite(), this.range);
+    System.out.println("CURRENT: "+location.toString()+" DIRECTION: "+dir.getAngleDegrees()+" OPPOSITE: "+dir.opposite().getAngleDegrees()+" NEW: "+newDestination.toString());
+    //this.robotController.setIndicatorLine(location, newDestination, 0, 255, 0);
+    //System.out.println("BOUNCE");
+    this.traveller = new Traveller(this, robotController);
+    this.traveller.setDestination(newDestination);
   }
 
   public void move(){
     RobotInfo[] companions = nearbyCompanions();
+    MapLocation currentLocation = robotController.getLocation();
+    if(this.traveller.hasDestination()){
+      this.robotController.setIndicatorLine(currentLocation, this.traveller.getDestination(), 0, 255, 0);
+    }
     if(companions.length == 0){
-      moveToRandomLocation();
+      // Continue if we already have a destination
+      if(!traveller.hasDestination()) moveToRandomLocation();
     } else {
       // Will need a better base direction
-      Direction dir = new Direction(0);
+      Direction dir = null;
+      // directionTo returns null if the the current location
+      // and the destination are the same so we deal with
+      // that the same way we deal with there not being a
+      // traveller destination yet
+      //TODO: MAKE PRETTY
+      if(traveller.hasDestination()){
+        dir = currentLocation.directionTo(traveller.getDestination());
+      }
+      if(dir == null){
+        dir = new Direction((float)Math.random() * 2f * (float)Math.PI);
+      }
       dir = applyCohesion(dir, companions);
       dir = applyAlignment(dir, companions);
       dir = applySeparation(dir, companions);
       MapLocation loc = this.robotController.getLocation();
       traveller.setDestination(loc.add(dir, this.range));
     }
+    robotController.setIndicatorLine(currentLocation, traveller.getDestination(), 0, 0, 255);
 
     try {
       traveller.continueToDestination();
     } catch (GameActionException ex) {
-      System.err.println(ex.getMessage());
+      System.out.println("ERROR: "+ex.getMessage());
       //TODO: Consider where you actually want to catch this
     }
-    //this.previousCompanionLocations.clear();
-    //for(int i=0; i < companions.length; i++){
-    //  this.previousCompanionLocations.put(
-    //      companions[i].ID, companions[i].getLocation()
-    //      );
-    //}
-    //Collector<RobotInfo, ?, Map<Integer, MapLocation>> collector;
-    //collector = Collector.of(
-    //    () -> new HashMap<Integer, MapLocation>(),
-    //    (mem, ri) -> mem.put(ri.ID, ri.getLocation()),
-    //    (a, b) -> a
-    //    );
-
     this.previousCompanionLocations = Arrays.
       stream(companions).
       <Map<Integer, MapLocation>>collect(
@@ -112,28 +106,35 @@ public strictfp class BoidMovementBehaviour implements MovementInterface, Travel
           (Map<Integer, MapLocation> map, RobotInfo ri) -> map.put(ri.ID, ri.getLocation()),
           (Map<Integer, MapLocation> a, Map<Integer, MapLocation> b) -> {}
           );
-    //Collectors.toMap(
-    //        ri -> ri.ID,
-    //        RobotInfo::getLocation,
-    //        (a, b) -> a
-    //        )
   }
 
-  private Direction modifyDirection(Direction original, Direction modifier, float amount){
-    return original.rotateRightDegrees(modifier.radians * amount);
+  private Direction modifyDirection(Direction original, Direction target, float amount){
+    float origRadians = original.radians;
+    float targetRadians = target.radians;
+    //If amount == 1 then we get all of target none of original
+    //if amount == 0 then all of original, none of target
+    //where A = amount
+    //f(o, t) = (1 - A)o + At
+    //        = o - Ao + At
+    //        = o - A(o + t)
+    float modifiedRadians = origRadians - amount * (origRadians + targetRadians);
+    return new Direction(modifiedRadians);
   }
 
   //Try to avoid crowding companions/flockmates
   private Direction applySeparation(Direction dir, RobotInfo[] companions) {
     MapLocation loc = this.robotController.getLocation();
     Direction toLocalCompanions = loc.directionTo(meanLocation(companions));
+    if(toLocalCompanions == null) return dir;
     return modifyDirection(dir, toLocalCompanions.opposite(), separation);
   }
 
   //Try to move towards the centre of mass of companions/flockmates
   private Direction applyCohesion(Direction dir, RobotInfo[] companions){
     MapLocation loc = this.robotController.getLocation();
-    return modifyDirection(dir, loc.directionTo(meanLocation(companions)), cohesion);
+    Direction toLocalCompanions = loc.directionTo(meanLocation(companions));
+    if(toLocalCompanions == null) return dir;
+    return modifyDirection(dir, toLocalCompanions, cohesion);
   }
 
   //Try to go in the same direction as companions/flockmates
@@ -151,8 +152,6 @@ public strictfp class BoidMovementBehaviour implements MovementInterface, Travel
     b.append("]");
     System.out.println(b.toString());
   }
-  //private void <T> printArray(T[] arr, Function<T> printer){
-  //}
 
   private Direction meanDirection(Direction[] dirs){
     if(dirs.length == 0) return new Direction(0f);

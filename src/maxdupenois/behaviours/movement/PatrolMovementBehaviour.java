@@ -65,4 +65,5 @@ public strictfp class PatrolMovementBehaviour implements MovementInterface, Trav
     //}
   }
   public void onFailingToReachDestinationNode(MapLocation destination) {}
+  public void onMapBoundaryFound(MapLocation destination) {}
 }

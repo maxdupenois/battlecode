@@ -16,4 +16,5 @@ public class DummyTravellerSubscriber implements TravellerEventInterface {
   }
   public void onReachingDestinationNode(MapLocation location) {}
   public void onFailingToReachDestinationNode(MapLocation location) {}
+  public void onMapBoundaryFound(MapLocation destination) {}
 }

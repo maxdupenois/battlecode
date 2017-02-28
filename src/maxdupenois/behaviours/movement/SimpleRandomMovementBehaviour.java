@@ -49,4 +49,5 @@ public strictfp class SimpleRandomMovementBehaviour implements MovementInterface
   public void onFailingToReachDestination(MapLocation destination) {}
   public void onReachingDestinationNode(MapLocation destination) {}
   public void onFailingToReachDestinationNode(MapLocation destination) {}
+  public void onMapBoundaryFound(MapLocation destination) {}
 }

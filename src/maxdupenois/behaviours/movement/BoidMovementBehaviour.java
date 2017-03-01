@@ -129,7 +129,7 @@ public strictfp class BoidMovementBehaviour implements MovementInterface, Travel
     traveller.setDestination(randomDestination(currentLocation, this.range));
   }
 
-  private void baseDirection(MapLocation currentLocation){
+  private Direction baseDirection(MapLocation currentLocation){
     Direction base = null;
     // directionTo returns null if the the current location
     // and the destination are the same so we deal with
@@ -139,7 +139,7 @@ public strictfp class BoidMovementBehaviour implements MovementInterface, Travel
       MapLocation destination = traveller.getDestination();
       base = currentLocation.directionTo(destination);
     }
-    return base == null ? randomDirection() : base;
+    return (base == null ? randomDirection() : base);
   }
 
   private void applyBoidBehaviours(MapLocation currentLocation, RobotInfo[] companions){
@@ -249,8 +249,9 @@ public strictfp class BoidMovementBehaviour implements MovementInterface, Travel
   // Movement Interface methods
   public void onReachingDestination(MapLocation destination) {}
   public void onFailingToReachDestination(MapLocation destination) {}
-  public void onReachingDestinationNode(MapLocation destination) {}
-  public void onFailingToReachDestinationNode(MapLocation destination) {}
+  public void onReachingDiversion(MapLocation destination) {}
+  public void onDiversion(MapLocation destination) {}
+  public void onNeedingToDivert(MapLocation destination) {}
 
   // Debug methods
   private void debug_showCurrentDestination(){

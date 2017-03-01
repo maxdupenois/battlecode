@@ -22,7 +22,7 @@ public class TravellerTest {
     }, new MapLocation(2, 1));
     eventSubscriber = new DummyTravellerSubscriber();
     traveller = new Traveller(
-        eventSubscriber, robotController, 20, 0.9f
+        eventSubscriber, robotController, 0.9f
         );
     // Enough to go diagonally but not
     // jump a square
@@ -33,7 +33,7 @@ public class TravellerTest {
   public void testPathFinding(){
     endDestination = new MapLocation(4, 4);
     traveller.setDestination(endDestination);
-    traveller.debugOff();
+    traveller.debug_dbgOff();
 
     runJourney();
     //debugPrintMaps();
@@ -45,7 +45,7 @@ public class TravellerTest {
   public void testMapBoundaryFinding(){
     endDestination = new MapLocation(5, 0);
     traveller.setDestination(endDestination);
-    traveller.debugOff();
+    traveller.debug_dbgOff();
 
     runJourney();
 
@@ -64,7 +64,11 @@ public class TravellerTest {
   private void runJourney(){
     //Just ensure we don't loop eternally
     int counter = 30;
-    while(!traveller.hasReachedDestination() && counter > 0){
+    while(
+        traveller.hasDestination() &&
+        !traveller.hasReachedDestination() &&
+        counter > 0
+        ){
       try {
         traveller.continueToDestination();
       } catch (GameActionException ex) {

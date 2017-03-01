@@ -56,7 +56,7 @@ public strictfp class PatrolMovementBehaviour implements MovementInterface, Trav
   // Movement Interface methods
   public void onReachingDestination(MapLocation destination) {}
   public void onFailingToReachDestination(MapLocation destination) {}
-  public void onReachingDestinationNode(MapLocation destination) {
+  public void onReachingDiversion(MapLocation destination) {
     //System.out.println("FAILED TO HIT "+destination.toString());
     //try {
     //  System.out.println("ON MAP "+(robotController.onTheMap(destination) ? "Yes" : "NO!"));
@@ -64,6 +64,7 @@ public strictfp class PatrolMovementBehaviour implements MovementInterface, Trav
     //  System.out.println("----> Out of sensor range "+ex.getMessage());
     //}
   }
-  public void onFailingToReachDestinationNode(MapLocation destination) {}
+  public void onDiversion(MapLocation destination) {}
+  public void onNeedingToDivert(MapLocation destination) {}
   public void onMapBoundaryFound(MapLocation destination) {}
 }

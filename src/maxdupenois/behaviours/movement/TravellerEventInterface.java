@@ -7,7 +7,8 @@ public interface TravellerEventInterface {
   void onReachingDestination(MapLocation location);
   void onFailingToReachDestination(MapLocation location);
   // used when we're part way through a movement
-  void onReachingDestinationNode(MapLocation location);
-  void onFailingToReachDestinationNode(MapLocation location);
+  void onReachingDiversion(MapLocation location);
+  void onNeedingToDivert(MapLocation location);
+  void onDiversion(MapLocation location);
   void onMapBoundaryFound(MapLocation location);
 }

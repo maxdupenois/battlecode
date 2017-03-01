@@ -1,4 +1,6 @@
 package maxdupenois.behaviours.movement;
+
+import static maxdupenois.util.GeometryUtil.*;
 import battlecode.common.MapLocation;
 import battlecode.common.RobotController;
 import battlecode.common.RobotType;
@@ -16,10 +18,6 @@ import java.util.Arrays;
 import java.util.stream.Stream;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
-import java.util.function.Function;
-import java.util.function.BiConsumer;
-import java.util.function.Supplier;
-import java.util.function.BinaryOperator;
 
 //The most basic form of movement behaviour,
 //does noting with hooks, simply uses a traveller
@@ -42,7 +40,6 @@ public strictfp class BoidMovementBehaviour implements MovementInterface, Travel
   private float[] cohesionToSeparationRange = new float[]{
     5f, 20f
   };
-  //private MapLocation destinationOffOfMap = null;
 
   private Map<Integer, MapLocation> previousCompanionLocations;
   private MapLocation previousLocation;
@@ -50,7 +47,6 @@ public strictfp class BoidMovementBehaviour implements MovementInterface, Travel
   private int clearStuckCount;
   private static int MAX_STUCK_COUNT=2;
   private static int MOVES_TO_CLEAR_BEING_STUCK = 6;
-
 
   public BoidMovementBehaviour(RobotController robotController, RobotType groupingType, float range){
     this.traveller = new Traveller(this, robotController);
@@ -68,90 +64,101 @@ public strictfp class BoidMovementBehaviour implements MovementInterface, Travel
     this.stuckCount = MAX_STUCK_COUNT;
   }
 
-  public void move(){
+
+  public void move() throws GameActionException {
     RobotInfo[] companions = nearbyCompanions();
     MapLocation currentLocation = robotController.getLocation();
-    if(this.traveller.hasDestination()){
-      this.robotController.setIndicatorLine(currentLocation, this.traveller.getDestination(), 0, 255, 0);
-    }
 
-    if(previousLocation != null && previousLocation.isWithinDistance(currentLocation, 1f)){
-      stuckCount++;
-    }
+    debug_showCurrentDestination();
+
+    checkIfStuck(currentLocation);
+
+    boolean isMovingAwayFromBeingStuck = clearStuckCount > 0;
+    boolean isStuck = stuckCount >= MAX_STUCK_COUNT;
+    boolean hasNoDestinationAndNoCompanions = !this.traveller.hasDestination() && companions.length == 0;
+    boolean hasCompanions = companions.length > 0;
 
     //Main logic switch, needs
     //to be refactored to be clearer
-    if(clearStuckCount > 0){
+    if(isMovingAwayFromBeingStuck){
+      //continue on to previous destination but
+      //countdown the stuck count
       clearStuckCount --;
-      //continue on to previous destination
-    } else if(stuckCount >= MAX_STUCK_COUNT) {
-      //Bounce!
-      Direction dir = currentLocation.directionTo(this.traveller.getDestination());
-      if(dir == null){
-        moveToRandomLocation();
-      } else {
-        MapLocation newDestination = currentLocation.add(dir.opposite(), this.range);
-        this.traveller.setDestination(newDestination);
-      }
-      this.stuckCount = 0;
-      // After identifying that we're stuck
-      // we need to have a bit of time allowed
-      // to move us away, otherwise we'll regroup
-      // and get stuck on the wall again
-      this.clearStuckCount = MOVES_TO_CLEAR_BEING_STUCK;
-    } else if(!this.traveller.hasDestination() && companions.length == 0){
-      moveToRandomLocation();
-    } else if(companions.length > 0) {
-      // Will need a better base direction
-      Direction dir = null;
-      // directionTo returns null if the the current location
-      // and the destination are the same so we deal with
-      // that the same way we deal with there not being a
-      // traveller destination yet
-      //TODO: MAKE PRETTY
-      if(traveller.hasDestination()){
-        dir = currentLocation.directionTo(traveller.getDestination());
-      }
-      if(dir == null){
-        dir = new Direction((float)Math.random() * 2f * (float)Math.PI);
-      }
-      dir = applyCohesion(dir, companions);
-      dir = applyAlignment(dir, companions);
-      dir = applySeparation(dir, companions);
-      MapLocation loc = this.robotController.getLocation();
-      traveller.setDestination(loc.add(dir, this.range));
-    }
-    if(traveller.hasDestination()){
-      robotController.setIndicatorLine(currentLocation, traveller.getDestination(), 0, 0, 255);
+    } else if(isStuck) {
+      bounceAwayFromBeingStuck(currentLocation);
+    } else if(hasNoDestinationAndNoCompanions){
+      moveToRandomLocation(currentLocation);
+    } else if(hasCompanions) {
+      applyBoidBehaviours(currentLocation, companions);
     }
 
-    try {
-      traveller.continueToDestination();
-    } catch (GameActionException ex) {
-      System.out.println("ERROR: "+ex.getMessage());
-      //TODO: Consider where you actually want to catch this
+    debug_showNewDestination();
+
+    traveller.continueToDestination();
+
+    this.previousCompanionLocations = buildPreviousCompanionLocations(companions);
+    this.previousLocation = currentLocation;
+  }
+
+  private void checkIfStuck(MapLocation currentLocation){
+    if(previousLocation == null) return;
+    if(!previousLocation.isWithinDistance(currentLocation, 1f)) return;
+    stuckCount++;
+  }
+
+  private void bounceAwayFromBeingStuck(MapLocation currentLocation){
+    //Bounce!
+    Direction dir = currentLocation.directionTo(this.traveller.getDestination());
+    if(dir == null){
+      //Shouldn't happen as this means we're stuck
+      //but also where we want to be
+      moveToRandomLocation(currentLocation);
+    } else {
+      MapLocation newDestination = currentLocation.add(dir.opposite(), this.range);
+      this.traveller.setDestination(newDestination);
     }
-    this.previousCompanionLocations = Arrays.
+    this.stuckCount = 0;
+    // After identifying that we're stuck
+    // we need to have a bit of time allowed
+    // to move us away, otherwise we'll regroup
+    // and get stuck on the wall again
+    this.clearStuckCount = MOVES_TO_CLEAR_BEING_STUCK;
+  }
+
+  private void moveToRandomLocation(MapLocation currentLocation) {
+    traveller.setDestination(randomDestination(currentLocation, this.range));
+  }
+
+  private void baseDirection(MapLocation currentLocation){
+    Direction base = null;
+    // directionTo returns null if the the current location
+    // and the destination are the same so we deal with
+    // that the same way we deal with there not being a
+    // traveller destination yet
+    if(traveller.hasDestination()){
+      MapLocation destination = traveller.getDestination();
+      base = currentLocation.directionTo(destination);
+    }
+    return base == null ? randomDirection() : base;
+  }
+
+  private void applyBoidBehaviours(MapLocation currentLocation, RobotInfo[] companions){
+    Direction dir = baseDirection(currentLocation);
+
+    dir = applyCohesion(dir, companions);
+    dir = applyAlignment(dir, companions);
+    dir = applySeparation(dir, companions);
+    traveller.setDestination(currentLocation.add(dir, this.range));
+  }
+
+  private Map<Integer, MapLocation> buildPreviousCompanionLocations(RobotInfo[] companions){
+    return Arrays.
       stream(companions).
       <Map<Integer, MapLocation>>collect(
           () -> new HashMap<Integer, MapLocation>(),
           (Map<Integer, MapLocation> map, RobotInfo ri) -> map.put(ri.ID, ri.getLocation()),
           (Map<Integer, MapLocation> a, Map<Integer, MapLocation> b) -> {}
           );
-    this.previousLocation = currentLocation;
-  }
-
-  private Direction modifyDirection(Direction original, Direction target, float amount){
-    float origRadians = original.radians;
-    float targetRadians = target.radians;
-    //If amount == 1 then we get all of target none of original
-    //if amount == 0 then all of original, none of target
-    //where A = amount
-    //f(o, t) = (1 - A)o + At
-    //        = o - Ao + At
-    //        = o - A(o + t)
-    float modifiedRadians = origRadians - amount * (origRadians + targetRadians);
-    return new Direction(modifiedRadians);
   }
 
   //Try to avoid crowding companions/flockmates
@@ -211,33 +218,56 @@ public strictfp class BoidMovementBehaviour implements MovementInterface, Travel
     return modifyDirection(dir, meanDirection(companionDirections), alignment);
   }
 
-  private void printDirections(Direction[] dirs){
-    StringBuffer b = new StringBuffer("DIRECTIONS: [");
-    for(int d = 0; d < dirs.length; d++){
-      b.append((dirs[d] == null ? "null" : dirs[d].radians));
-      b.append(", ");
+  private Direction[] estimateCompanionDirections(RobotInfo[] companions){
+    //Direction is null if there's been no movement so
+    //we need to filter them out
+    Stream<Direction> stream = Arrays
+      .stream(companions)
+      .filter(c -> this.previousCompanionLocations.containsKey(c.ID))
+      .map(c -> {
+        MapLocation prev = this.previousCompanionLocations.get(c.ID);
+        MapLocation current = c.getLocation();
+        return prev.directionTo(current);
+      })
+      .filter(d -> d != null);
+    Direction[] dirs = stream.toArray(Direction[]::new);
+    return dirs;
+  }
+
+  private RobotInfo[] nearbyCompanions(){
+    ArrayList<RobotInfo> companions = new ArrayList<RobotInfo>();
+    RobotInfo[] robots = this.robotController.senseNearbyRobots();
+    for(int r = 0; r < robots.length; r++){
+      if(robots[r].getTeam() != this.team) continue;
+      if(robots[r].getType() != this.groupingType) continue;
+      companions.add(robots[r]);
     }
-    b.append("]");
-    System.out.println(b.toString());
+    return companions.toArray(new RobotInfo[companions.size()]);
   }
 
-  private Direction meanDirection(Direction[] dirs){
-    if(dirs.length == 0) return new Direction(0f);
-    float radianSum = Arrays.
-      stream(dirs).
-      map(d -> d.radians).
-      <Float>collect(
-          () -> new Float(0),
-          (Float sum, Float radians) -> new Float(sum.floatValue() + radians.floatValue()),
-          (Float sum, Float otherSum) -> {}
-          ).floatValue();
-      //mapToDouble(d -> d.radians).
-      //sum();
-    return new Direction(0f).
-      rotateRightDegrees(radianSum/(float)dirs.length);
+
+  // Movement Interface methods
+  public void onReachingDestination(MapLocation destination) {}
+  public void onFailingToReachDestination(MapLocation destination) {}
+  public void onReachingDestinationNode(MapLocation destination) {}
+  public void onFailingToReachDestinationNode(MapLocation destination) {}
+
+  // Debug methods
+  private void debug_showCurrentDestination(){
+    if(!this.traveller.hasDestination()) return;
+    this.robotController.setIndicatorLine(
+        this.robotController.getLocation(),
+        this.traveller.getDestination(), 0, 255, 0);
   }
 
-  private void printCompanionLocationsMap(Map<Integer, MapLocation> map){
+  private void debug_showNewDestination(){
+    if(!this.traveller.hasDestination()) return;
+    this.robotController.setIndicatorLine(
+        this.robotController.getLocation(),
+        this.traveller.getDestination(), 0, 0, 255);
+  }
+
+  private void debug_printCompanionLocationsMap(Map<Integer, MapLocation> map){
     StringBuffer b = new StringBuffer("LOCATION MAP {\n");
     Set<Integer> keys = map.keySet();
     Iterator<Integer> iter = keys.iterator();
@@ -253,85 +283,4 @@ public strictfp class BoidMovementBehaviour implements MovementInterface, Travel
     b.append("}");
     System.out.println(b.toString());
   }
-
-  private Direction[] estimateCompanionDirections(RobotInfo[] companions){
-    //printCompanionLocationsMap(this.previousCompanionLocations);
-    //Direction is null if there's been no movement so
-    //we need to filter them out
-    Stream<Direction> stream = Arrays
-      .stream(companions)
-      .filter(c -> this.previousCompanionLocations.containsKey(c.ID))
-      .map(c -> {
-        MapLocation prev = this.previousCompanionLocations.get(c.ID);
-        MapLocation current = c.getLocation();
-        //System.out.println("PREVIOUS: "+prev.toString()+" CURRENT: "+current.toString()+" DIRECTION: "+prev.directionTo(current));
-        return prev.directionTo(current);
-      })
-      .filter(d -> d != null);
-    Direction[] dirs = stream.toArray(Direction[]::new);
-    //printDirections(dirs);
-    return dirs;
-
-    //Direction[] dirs = new Direction[companions.length];
-    //RobotInfo comp;
-    //MapLocation previousLocation;
-    //for(int d = 0; d < dirs.length; d++){
-    //  comp = companions[d];
-    //  if(!this.previousCompanionLocations.containsKey(comp.getId())){
-    //    dirs[d] = 0;
-    //    continue;
-    //  }
-    //  previousLocation = this.previousCompanionLocations.get(comp.getId());
-    //  dirs[d] = previousLocation.directionTo(comp.getLocation());
-    //}
-    //return dirs;
-  }
-
-  //TODO: This could also be streamed
-  private RobotInfo[] nearbyCompanions(){
-    ArrayList<RobotInfo> companions = new ArrayList<RobotInfo>();
-    RobotInfo[] robots = this.robotController.senseNearbyRobots();
-    for(int r = 0; r < robots.length; r++){
-      if(robots[r].getTeam() != this.team) continue;
-      if(robots[r].getType() != this.groupingType) continue;
-      companions.add(robots[r]);
-    }
-    return companions.toArray(new RobotInfo[companions.size()]);
-  }
-
-  //TODO: This could also be streamed
-  private MapLocation meanLocation(RobotInfo[] robots){
-    MapLocation myLocation = this.robotController.getLocation();
-    float meanX = myLocation.x;
-    float meanY = myLocation.y;
-    MapLocation loc;
-    for(int r = 0; r < robots.length; r++){
-      loc = robots[r].getLocation();
-      meanX += loc.x;
-      meanY += loc.y;
-    }
-    return new MapLocation(
-        meanX/robots.length, meanY/robots.length
-        );
-  }
-
-  private void moveToRandomLocation() {
-    if(!traveller.hasDestination() || traveller.hasReachedDestination()){
-      Direction dir = new Direction(
-          (float)Math.random() * 2 * (float)Math.PI
-          );
-      float distance = (float)Math.random() * this.range;
-      MapLocation newLocation = this.
-        robotController.
-        getLocation().
-        add(dir, distance);
-      traveller.setDestination(newLocation);
-    }
-  }
-
-  // Movement Interface methods
-  public void onReachingDestination(MapLocation destination) {}
-  public void onFailingToReachDestination(MapLocation destination) {}
-  public void onReachingDestinationNode(MapLocation destination) {}
-  public void onFailingToReachDestinationNode(MapLocation destination) {}
 }

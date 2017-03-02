@@ -94,6 +94,7 @@ public strictfp class Traveller {
   // TODO: Refactor out the mid code returns, generally clean this
   // up
   public void continueToDestination() throws GameActionException {
+    if(!this.hasDestination()) return;
     if(this.hasReachedDestination()) return;
     if(this.robotController.hasMoved()) return;
     MapLocation currentLocation = this.robotController.getLocation();

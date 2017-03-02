@@ -3,6 +3,7 @@ import battlecode.common.MapLocation;
 import battlecode.common.RobotController;
 import battlecode.common.GameActionException;
 import battlecode.common.Direction;
+import static maxdupenois.util.GeometryUtil.*;
 
 //The most basic form of movement behaviour,
 //does noting with hooks, simply uses a traveller
@@ -18,7 +19,7 @@ public strictfp class SimpleRandomMovementBehaviour implements MovementInterface
     this.range =range;
   }
 
-  public void move(){
+  public void move() throws GameActionException{
     if(!traveller.hasDestination() || traveller.hasReachedDestination()){
       // Only thing we know is our starting location
       // so pick a random point based on that. We don't
@@ -26,22 +27,13 @@ public strictfp class SimpleRandomMovementBehaviour implements MovementInterface
       // is that our coordinates are in it, don't believe
       // we can even guarantee that there's a (0, 0) and hence
       // a bounding box we can use.
-      Direction dir = new Direction(
-          (float)Math.random() * 2 * (float)Math.PI
+      MapLocation newLocation = randomDestination(
+          this.robotController.getLocation(),
+          this.range
           );
-      float distance = (float)Math.random() * this.range;
-      MapLocation newLocation = this.
-        robotController.
-        getLocation().
-        add(dir, distance);
       traveller.setDestination(newLocation);
     }
-    try {
-      traveller.continueToDestination();
-    } catch (GameActionException ex) {
-      System.err.println(ex.getMessage());
-      //TODO: Consider where you actually want to catch this
-    }
+    traveller.continueToDestination();
   }
 
   // Movement Interface methods

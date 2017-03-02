@@ -36,7 +36,7 @@ public strictfp class PatrolMovementBehaviour implements MovementInterface, Trav
     }
   }
 
-  public void move(){
+  public void move() throws GameActionException {
     if(!traveller.hasDestination() || traveller.hasReachedDestination()){
       this.changeDirection();
       MapLocation newLocation = this.
@@ -45,25 +45,13 @@ public strictfp class PatrolMovementBehaviour implements MovementInterface, Trav
         add(this.currentDirection(), this.range);
       traveller.setDestination(newLocation);
     }
-    try {
-      traveller.continueToDestination();
-    } catch (GameActionException ex) {
-      System.err.println(ex.getMessage());
-      //TODO: Consider where you actually want to catch this
-    }
+    traveller.continueToDestination();
   }
 
   // Movement Interface methods
   public void onReachingDestination(MapLocation destination) {}
   public void onFailingToReachDestination(MapLocation destination) {}
-  public void onReachingDiversion(MapLocation destination) {
-    //System.out.println("FAILED TO HIT "+destination.toString());
-    //try {
-    //  System.out.println("ON MAP "+(robotController.onTheMap(destination) ? "Yes" : "NO!"));
-    //} catch(GameActionException ex){
-    //  System.out.println("----> Out of sensor range "+ex.getMessage());
-    //}
-  }
+  public void onReachingDiversion(MapLocation destination) {}
   public void onDiversion(MapLocation destination) {}
   public void onNeedingToDivert(MapLocation destination) {}
   public void onMapBoundaryFound(MapLocation destination) {}

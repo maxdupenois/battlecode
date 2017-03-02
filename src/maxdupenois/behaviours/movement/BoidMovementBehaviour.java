@@ -8,6 +8,7 @@ import battlecode.common.RobotInfo;
 import battlecode.common.Team;
 import battlecode.common.GameActionException;
 import battlecode.common.Direction;
+import battlecode.common.BulletInfo;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.HashMap;
@@ -35,9 +36,22 @@ public strictfp class BoidMovementBehaviour implements MovementInterface, Travel
   // same direction
   private float alignment = 0.2f;
 
+  private float bulletAvoidance = 0.8f;
+
+  private float enemyCohesion = 0.6f;
+  private float enemySeparation = 0.6f;
+
   //At maximum range we have full cohesion no separation
   //at minimum range we have full separation no cohesion
   private float[] cohesionToSeparationRange = new float[]{
+    2f, 10f
+  };
+
+  private float[] enemyCohesionToSeparationRange = new float[]{
+    5f, 20f
+  };
+
+  private float[] bulletAwarenessRange = new float[]{
     5f, 20f
   };
 
@@ -66,7 +80,10 @@ public strictfp class BoidMovementBehaviour implements MovementInterface, Travel
 
 
   public void move() throws GameActionException {
-    RobotInfo[] companions = nearbyCompanions();
+    RobotInfo[] robots = this.robotController.senseNearbyRobots();
+    BulletInfo[] bullets = this.robotController.senseNearbyBullets();
+    RobotInfo[] companions = filterCompanions(robots);
+    RobotInfo[] enemies = filterEnemies(robots);
     MapLocation currentLocation = robotController.getLocation();
 
     debug_showCurrentDestination();
@@ -90,6 +107,18 @@ public strictfp class BoidMovementBehaviour implements MovementInterface, Travel
       moveToRandomLocation(currentLocation);
     } else if(hasCompanions) {
       applyBoidBehaviours(currentLocation, companions);
+
+      //only apply enemy cohesion if we're in a group
+      if(enemies.length > 0) applyEnemyCohesion(currentLocation, enemies);
+    }
+
+    //Secondary behaviours that should always apply,
+    //e.g. bullet avoidance
+    if(bullets.length > 0){
+      applyBulletAvoidance(currentLocation, bullets);
+    }
+    if(enemies.length > 0){
+      applyEnemySeparation(currentLocation, enemies);
     }
 
     debug_showNewDestination();
@@ -145,9 +174,64 @@ public strictfp class BoidMovementBehaviour implements MovementInterface, Travel
   private void applyBoidBehaviours(MapLocation currentLocation, RobotInfo[] companions){
     Direction dir = baseDirection(currentLocation);
 
-    dir = applyCohesion(dir, companions);
-    dir = applyAlignment(dir, companions);
-    dir = applySeparation(dir, companions);
+    dir = modifyDirectionByCohesion(dir, companions);
+    dir = modifyDirectionByAlignment(dir, companions);
+    dir = modifyDirectionBySeparation(dir, companions);
+    traveller.setDestination(currentLocation.add(dir, this.range));
+  }
+
+  private void applyBulletAvoidance(MapLocation currentLocation, BulletInfo[] bullets){
+    // Because the target can have been set by boid behaviour we
+    // can reuse the base direction method without losing
+    // their modifications
+    Direction dir = baseDirection(currentLocation);
+    Direction bulletDir;
+    MapLocation bulletLoc;
+    // To make this simple as a starting version
+    // we'll ignore speed and our own travel,
+    // if the direction of a bullet takes it to
+    // our current location we'll take that
+    // as sufficient warning to bail
+
+    float minRange = bulletAwarenessRange[0];
+    float maxRange = bulletAwarenessRange[1];
+    // How close we have to be consider a collision
+    float collisionRange = 1f;
+    float distanceToBullet;
+    float actBulletAvoidance;
+    float rangeDifference;
+    float distanceWithinRange;
+    Direction avoidanceDir;
+    for(int b = 0; b < bullets.length; b++){
+      bulletDir = bullets[b].getDir();
+      bulletLoc = bullets[b].getLocation();
+      //bullet range is the maximum awareness range
+      if(!isCollisionLikely(
+            currentLocation, bulletLoc, bulletDir,
+            maxRange, collisionRange)) continue;
+
+      distanceToBullet = currentLocation.distanceTo(bulletLoc);
+      //bullet avoidance scales from the full amount at min range
+      //to 0 at max range
+      //S = separation, M_0 = min range, M_1 max range
+      //f(d) = S * (1 - MIN(MAX(d - M_0, 0), M_1 - M_0)/(M_1 - M_0))
+      rangeDifference = maxRange - minRange;
+      distanceWithinRange = Math.min(Math.max(distanceToBullet - minRange, 0), rangeDifference);
+      actBulletAvoidance = bulletAvoidance * (1 - distanceWithinRange/rangeDifference);
+
+      // Bullet direction might be in front or behind me
+      // so simply going the opposite of that might
+      // put me closer to the bullet, rather than
+      // work it out we'll aim perpendicular to the bullet
+      // Veer left or right randomly
+      if (Math.random() > 0.5) {
+        avoidanceDir = bulletDir.rotateRightDegrees(90);
+      } else {
+        avoidanceDir = bulletDir.rotateLeftDegrees(90);
+      }
+
+      dir = modifyDirection(dir, avoidanceDir, actBulletAvoidance);
+    }
     traveller.setDestination(currentLocation.add(dir, this.range));
   }
 
@@ -161,8 +245,82 @@ public strictfp class BoidMovementBehaviour implements MovementInterface, Travel
           );
   }
 
+  // Move towards local enemies
+  private void applyEnemyCohesion(MapLocation currentLocation, RobotInfo[] enemies) {
+    // Because the target can have been set by boid behaviour we
+    // can reuse the base direction method without losing
+    // their modifications
+    Direction dir = baseDirection(currentLocation);
+    Direction bulletDir;
+    MapLocation bulletLoc;
+    // To make this simple as a starting version
+    // we'll ignore speed and our own travel,
+    // if the direction of a bullet takes it to
+    // our current location we'll take that
+    // as sufficient warning to bail
+
+    MapLocation centreOfMass = meanLocation(enemies);
+    Direction toLocalEnemies = currentLocation.directionTo(centreOfMass);
+    if(toLocalEnemies == null) {
+      //Uh panic? We're in the middle of the buggers
+      //so any destination is as good as any other,
+      //leave it as it is
+      return;
+    }
+    float distance = currentLocation.distanceTo(centreOfMass);
+    float minRange = enemyCohesionToSeparationRange[0];
+    float maxRange = enemyCohesionToSeparationRange[1];
+    //cohesion scales from the 0 at min range
+    //to full amount at max range
+    //C = cohesion, M_0 = min range, M_1 max range
+    //f(d) = C * MIN(MAX(d - M_0, 0), M_1 - M_0)/(M_1 - M_0))
+    float rangeDifference = maxRange - minRange;
+    float distanceWithinRange = Math.min(Math.max(distance - minRange, 0), rangeDifference);
+    float actualCoh = enemyCohesion * (distanceWithinRange/rangeDifference);
+    dir = modifyDirection(dir, toLocalEnemies, actualCoh);
+
+    traveller.setDestination(currentLocation.add(dir, this.range));
+  }
+
+  //Try to avoid getting to close to enemies
+  private void applyEnemySeparation(MapLocation currentLocation, RobotInfo[] enemies) {
+    // Because the target can have been set by boid behaviour we
+    // can reuse the base direction method without losing
+    // their modifications
+    Direction dir = baseDirection(currentLocation);
+    Direction bulletDir;
+    MapLocation bulletLoc;
+    // To make this simple as a starting version
+    // we'll ignore speed and our own travel,
+    // if the direction of a bullet takes it to
+    // our current location we'll take that
+    // as sufficient warning to bail
+
+    MapLocation centreOfMass = meanLocation(enemies);
+    Direction toLocalEnemies = currentLocation.directionTo(centreOfMass);
+    if(toLocalEnemies == null) {
+      //Uh panic? We're in the middle of the buggers
+      //so any destination is as good as any other,
+      //leave it as it is
+      return;
+    }
+    float distance = currentLocation.distanceTo(centreOfMass);
+    float minRange = enemyCohesionToSeparationRange[0];
+    float maxRange = enemyCohesionToSeparationRange[1];
+    //separation scales from the full amount at min range
+    //to 0 at max range
+    //S = separation, M_0 = min range, M_1 max range
+    //f(d) = S * (1 - MIN(MAX(d - M_0, 0), M_1 - M_0)/(M_1 - M_0))
+    float rangeDifference = maxRange - minRange;
+    float distanceWithinRange = Math.min(Math.max(distance - minRange, 0), rangeDifference);
+    float actualSep = enemySeparation * (1 - distanceWithinRange/rangeDifference);
+
+    dir = modifyDirection(dir, toLocalEnemies.opposite(), actualSep);
+    traveller.setDestination(currentLocation.add(dir, this.range));
+  }
+
   //Try to avoid crowding companions/flockmates
-  private Direction applySeparation(Direction dir, RobotInfo[] companions) {
+  private Direction modifyDirectionBySeparation(Direction dir, RobotInfo[] companions) {
     MapLocation loc = this.robotController.getLocation();
     MapLocation centreOfMass = meanLocation(companions);
     Direction toLocalCompanions = loc.directionTo(centreOfMass);
@@ -194,7 +352,7 @@ public strictfp class BoidMovementBehaviour implements MovementInterface, Travel
   }
 
   //Try to move towards the centre of mass of companions/flockmates
-  private Direction applyCohesion(Direction dir, RobotInfo[] companions){
+  private Direction modifyDirectionByCohesion(Direction dir, RobotInfo[] companions){
     MapLocation loc = this.robotController.getLocation();
     MapLocation centreOfMass = meanLocation(companions);
     Direction toLocalCompanions = loc.directionTo(centreOfMass);
@@ -213,7 +371,7 @@ public strictfp class BoidMovementBehaviour implements MovementInterface, Travel
   }
 
   //Try to go in the same direction as companions/flockmates
-  private Direction applyAlignment(Direction dir, RobotInfo[] companions) {
+  private Direction modifyDirectionByAlignment(Direction dir, RobotInfo[] companions) {
     Direction[] companionDirections = estimateCompanionDirections(companions);
     return modifyDirection(dir, meanDirection(companionDirections), alignment);
   }
@@ -234,9 +392,20 @@ public strictfp class BoidMovementBehaviour implements MovementInterface, Travel
     return dirs;
   }
 
-  private RobotInfo[] nearbyCompanions(){
+  private RobotInfo[] filterEnemies(RobotInfo[] robots){
+    ArrayList<RobotInfo> enemies = new ArrayList<RobotInfo>();
+    Team rbtTeam;
+    for(int r = 0; r < robots.length; r++){
+      rbtTeam = robots[r].getTeam();
+      if(rbtTeam != this.team) continue;
+      if(rbtTeam != Team.NEUTRAL) continue;
+      enemies.add(robots[r]);
+    }
+    return enemies.toArray(new RobotInfo[enemies.size()]);
+  }
+
+  private RobotInfo[] filterCompanions(RobotInfo[] robots){
     ArrayList<RobotInfo> companions = new ArrayList<RobotInfo>();
-    RobotInfo[] robots = this.robotController.senseNearbyRobots();
     for(int r = 0; r < robots.length; r++){
       if(robots[r].getTeam() != this.team) continue;
       if(robots[r].getType() != this.groupingType) continue;

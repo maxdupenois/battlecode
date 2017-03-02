@@ -7,6 +7,12 @@ import battlecode.common.Direction;
 import java.util.Arrays;
 
 public class GeometryUtil {
+
+  public static boolean isCollisionLikely(MapLocation myLocation, MapLocation objectLocation, Direction objectDirection, float objectRange, float collisionRange){
+    LineSegment segment = new LineSegment(objectLocation, objectDirection, objectRange);
+    return segment.isWithinRangeOfSegment(myLocation, collisionRange);
+  }
+
   public static MapLocation meanLocation(BodyInfo[] bodies){
     float meanX = 0f;
     float meanY = 0f;
@@ -20,7 +26,6 @@ public class GeometryUtil {
         meanX/bodies.length, meanY/bodies.length
         );
   }
-
   public static MapLocation randomDestination(MapLocation currentLocation, float range){
     float distance = (float)Math.random() * range;
     return currentLocation.add(randomDirection(), distance);

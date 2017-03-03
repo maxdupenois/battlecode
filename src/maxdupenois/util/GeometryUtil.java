@@ -9,8 +9,8 @@ import java.util.Arrays;
 public class GeometryUtil {
 
   public static boolean isCollisionLikely(MapLocation myLocation, MapLocation objectLocation, Direction objectDirection, float objectRange, float collisionRange){
-    LineSegment segment = new LineSegment(objectLocation, objectDirection, objectRange);
-    return segment.isWithinRangeOfSegment(myLocation, collisionRange);
+    MapVector vector = new MapVector(objectLocation, objectDirection, objectRange);
+    return vector.isWithinRangeOfVector(myLocation, collisionRange);
   }
 
   public static MapLocation meanLocation(BodyInfo[] bodies){

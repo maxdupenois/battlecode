@@ -3,30 +3,30 @@ package maxdupenois.util;
 import battlecode.common.MapLocation;
 import battlecode.common.Direction;
 
-public class LineSegment {
+public class MapVector {
   private MapLocation start;
   private MapLocation finish;
   private Direction direction;
-  private float distance;
+  private float magnitude;
   private boolean horizontal;
   private boolean vertical;
   private float A;
   private float B;
   private float C;
 
-  public LineSegment(MapLocation start, MapLocation finish){
+  public MapVector(MapLocation start, MapLocation finish){
     this.start = start;
     this.finish = finish;
     this.direction = start.directionTo(finish);
-    this.distance = start.distanceTo(finish);
+    this.magnitude = start.distanceTo(finish);
     fillEquation();
   }
 
-  public LineSegment(MapLocation start, Direction dir, float distance){
+  public MapVector(MapLocation start, Direction dir, float magnitude){
     this.start = start;
-    this.finish = start.add(dir, distance);
+    this.finish = start.add(dir, magnitude);
     this.direction = dir;
-    this.distance = distance;
+    this.magnitude = magnitude;
     fillEquation();
   }
 
@@ -97,7 +97,7 @@ public class LineSegment {
     return vertical;
   }
 
-  public boolean isWithinRangeOfSegment(MapLocation location, float range){
+  public boolean isWithinRangeOfVector(MapLocation location, float range){
     MapLocation onLine;
     if(this.isVertical()){
       onLine = this.locationAtY(location.y);
@@ -105,8 +105,8 @@ public class LineSegment {
       onLine = this.locationAtX(location.x);
     }
     boolean withinRangeOfLine = onLine.isWithinDistance(location, range);
-    boolean withinSegment = (start.distanceTo(onLine) <= this.distance);
-    return withinRangeOfLine && withinSegment;
+    boolean withinVector = (start.distanceTo(onLine) <= this.magnitude);
+    return withinRangeOfLine && withinVector;
   }
 
 }

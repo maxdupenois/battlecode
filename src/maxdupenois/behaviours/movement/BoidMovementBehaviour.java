@@ -30,15 +30,15 @@ public strictfp class BoidMovementBehaviour implements MovementInterface, Travel
   private RobotType groupingType;
   private Team team;
   // Avoid crowding
-  private float separation = 0.5f;
+  private float separation = 0.4f;
   // head towards center of mass
-  private float cohesion = 0.5f;
+  private float cohesion = 0.8f;
   // same direction
   private float alignment = 0.2f;
 
   private float bulletAvoidance = 0.8f;
 
-  private float enemyCohesion = 0.6f;
+  private float enemyCohesion = 0.8f;
   private float enemySeparation = 0.6f;
 
   //At maximum range we have full cohesion no separation
@@ -52,7 +52,7 @@ public strictfp class BoidMovementBehaviour implements MovementInterface, Travel
   };
 
   private float[] bulletAwarenessRange = new float[]{
-    5f, 20f
+    5f, 10f
   };
 
   private Map<Integer, MapLocation> previousCompanionLocations;
@@ -205,12 +205,16 @@ public strictfp class BoidMovementBehaviour implements MovementInterface, Travel
     for(int b = 0; b < bullets.length; b++){
       bulletDir = bullets[b].getDir();
       bulletLoc = bullets[b].getLocation();
+      distanceToBullet = currentLocation.distanceTo(bulletLoc);
+      // NOTE: Weirdly better without this, they don't run
+      // in to their own bullets:
+      // Only care if bullet is on the way to me
+      // if(distanceToBullet <= currentLocation.distanceTo(bulletLoc.add(bulletDir))) continue;
       //bullet range is the maximum awareness range
       if(!isCollisionLikely(
             currentLocation, bulletLoc, bulletDir,
             maxRange, collisionRange)) continue;
 
-      distanceToBullet = currentLocation.distanceTo(bulletLoc);
       //bullet avoidance scales from the full amount at min range
       //to 0 at max range
       //S = separation, M_0 = min range, M_1 max range

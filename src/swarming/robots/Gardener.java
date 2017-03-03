@@ -18,7 +18,7 @@ public strictfp class Gardener extends Robot {
       Direction dir = new Direction(
           (float)Math.random() * 2 * (float)Math.PI
           );
-      if(scouts < 5 && this.rc.isBuildReady() && this.rc.canBuildRobot(RobotType.SCOUT, dir)){
+      if(scouts < 100 && this.rc.isBuildReady() && this.rc.canBuildRobot(RobotType.SCOUT, dir)){
         this.rc.buildRobot(RobotType.SCOUT, dir);
         scouts ++;
       }

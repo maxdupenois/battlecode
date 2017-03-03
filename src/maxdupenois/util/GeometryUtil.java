@@ -6,7 +6,7 @@ import battlecode.common.Direction;
 
 import java.util.Arrays;
 
-public class GeometryUtil {
+public strictfp class GeometryUtil {
 
   public static boolean isCollisionLikely(MapLocation myLocation, MapLocation objectLocation, Direction objectDirection, float objectRange, float collisionRange){
     MapVector vector = new MapVector(objectLocation, objectDirection, objectRange);

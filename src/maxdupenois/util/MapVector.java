@@ -3,7 +3,7 @@ package maxdupenois.util;
 import battlecode.common.MapLocation;
 import battlecode.common.Direction;
 
-public class MapVector {
+public strictfp class MapVector {
   private MapLocation start;
   private MapLocation finish;
   private Direction direction;

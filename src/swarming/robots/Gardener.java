@@ -19,7 +19,7 @@ public strictfp class Gardener extends Robot {
   private static int MOVEMENT_ROUND_COUNT = 20;
   // Ignore tanks and lumberjacks for the moment
   private RobotType[] buildQueue = new RobotType[]{
-    RobotType.SCOUT, RobotType.SCOUT, RobotType.SOLDIER
+    RobotType.SCOUT, RobotType.SOLDIER, RobotType.SOLDIER
   };
 
   public Gardener(RobotController rc){
@@ -57,10 +57,24 @@ public strictfp class Gardener extends Robot {
     debug_buildDirection();
     build();
     garden();
+    buyVictoryPoints();
+  }
+
+  private static int MIN_BULLETS_TO_DONATE = 100;
+  private void buyVictoryPoints() throws GameActionException {
+    // Only do this if I have at least 100 bullets
+    float bullets = rc.getTeamBullets();
+    if(bullets < MIN_BULLETS_TO_DONATE) return;
+    float cost = rc.getVictoryPointCost();
+    // never spend more than a third of my bullets
+    // because why not;
+    float maxSpend = bullets / 3f;
+    float actSpend = maxSpend - ( maxSpend % cost );
+    rc.donate(actSpend);
   }
 
   private void debug_buildDirection(){
-    this.rc.setIndicatorLine(this.rc.getLocation(), this.rc.getLocation().add(this.buildDirection, 10f), 100, 100,255);
+    rc.setIndicatorLine(rc.getLocation(), rc.getLocation().add(buildDirection, 10f), 100, 100,255);
   }
 
   //Let's have gardeners build similar

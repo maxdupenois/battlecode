@@ -18,6 +18,10 @@
 *.ipr
 *.iws
 /.idea/
+/others/
+/others/*
+src/ben
+src/samwho
 
 
 # User-specific stuff:

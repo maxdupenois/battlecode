@@ -12,33 +12,43 @@ public strictfp class SimpleRandomMovementBehaviour implements MovementInterface
   private Traveller traveller;
   private RobotController robotController;
   private float range;
+  private Direction currentDirection;
 
   public SimpleRandomMovementBehaviour(RobotController robotController, float range){
     this.traveller = new Traveller(this, robotController);
     this.robotController = robotController;
     this.range =range;
+    this.currentDirection = randomDirection();
+    traveller.setDestination(randomDestination());
+  }
+
+  private MapLocation randomDestination(){
+    // Ensure distance is at least half our range
+    float distance = ((float)Math.random() * range/2f) + range/2f;
+    return robotController.getLocation().add(
+        currentDirection, distance);
   }
 
   public void move() throws GameActionException{
-    if(!traveller.hasDestination() || traveller.hasReachedDestination()){
-      // Only thing we know is our starting location
-      // so pick a random point based on that. We don't
-      // know the map bounds the only thing we know
-      // is that our coordinates are in it, don't believe
-      // we can even guarantee that there's a (0, 0) and hence
-      // a bounding box we can use.
-      MapLocation newLocation = randomDestination(
-          this.robotController.getLocation(),
-          this.range
-          );
-      traveller.setDestination(newLocation);
-    }
     traveller.continueToDestination();
   }
 
   // Movement Interface methods
-  public void onReachingDestination(MapLocation destination) {}
-  public void onFailingToReachDestination(MapLocation destination) {}
+  public void onReachingDestination(MapLocation destination) {
+    this.currentDirection = randomDirection();
+    traveller.setDestination(randomDestination());
+  }
+
+  public void onFailingToReachDestination(MapLocation destination) {
+    //Try going the other way + some noise
+    float noise = (float)Math.random() * (float)Math.PI/2f;
+    noise = noise - (float)Math.PI/4f;
+    this.currentDirection = new Direction(
+        currentDirection.opposite().radians + noise
+        );
+    traveller.setDestination(randomDestination());
+  }
+
   public void onReachingDiversion(MapLocation destination) {}
   public void onDiversion(MapLocation destination) {}
   public void onNeedingToDivert(MapLocation destination) {}

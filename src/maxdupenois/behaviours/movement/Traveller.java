@@ -5,8 +5,10 @@ import battlecode.common.GameActionException;
 import battlecode.common.RobotController;
 import java.util.ArrayList;
 import java.util.Iterator;
+import maxdupenois.util.Debug;
 
 public strictfp class Traveller {
+  private static int MAX_STUCK_COUNT = 5;
   private float closeEnoughDistance;
   private MapLocation endDestination;
   private MapLocation destination;
@@ -19,6 +21,8 @@ public strictfp class Traveller {
   private RobotController robotController;
   private float strideRadius;
   private boolean showDebug;
+  private int robotID;
+  private int stuckCount;
 
   public Traveller(
       TravellerEventInterface eventSubscriber,
@@ -40,6 +44,7 @@ public strictfp class Traveller {
     this.strideRadius = this.robotController.getType().strideRadius;
     this.showDebug = false;
     this.locationHistory = new ArrayList<MapLocation>();
+    this.robotID = this.robotController.getID();
   }
 
   // Used in testing so we're not beholden to
@@ -49,6 +54,7 @@ public strictfp class Traveller {
   }
 
   public boolean isDiverted(){
+    if(this.destination == null) return false;
     return (!this.destination.equals(this.endDestination));
   }
 
@@ -100,7 +106,7 @@ public strictfp class Traveller {
     MapLocation currentLocation = this.robotController.getLocation();
 
     Direction currentDirection = currentLocation.directionTo(destination);
-    debug_out("Looking to reach "+destination.toString(), "oooooo\n");
+    debug_out("Looking to reach "+destination.toString(), "**");
 
     // This will switch out the diversion if we're close enough
     // and will let us finish if we hit the actual destination
@@ -112,12 +118,18 @@ public strictfp class Traveller {
     debug_out("scaled destination "+scaledDestination.toString());
 
     if(this.robotController.canMove(scaledDestination)) {
+      stuckCount = 0;
       debug_out(":) Moving To "+scaledDestination.toString());
       locationHistory.add(currentLocation);
       this.robotController.move(scaledDestination);
     } else {
-      debug_out(":( Looking for diversion");
-      findNewNode(currentLocation, scaledDestination, currentDirection);
+      stuckCount++;
+      if(stuckCount > MAX_STUCK_COUNT){
+        completeFailure();
+      } else {
+        debug_out(":( Looking for diversion");
+        findNewNode(currentLocation, scaledDestination, currentDirection);
+      }
     }
   }
 
@@ -169,12 +181,16 @@ public strictfp class Traveller {
       debug_out("Found diversion "+newDestination.toString()+" with score "+maxScore);
       debug_printDestinations();
     } else {
-      //irreparably blocked
-      MapLocation originalAimedFor = this.endDestination;
-      debug_out("Failed to hit destination completely, clearing");
-      this.clearDestination();
-      this.eventSubscriber.onFailingToReachDestination(originalAimedFor);
+      completeFailure();
     }
+  }
+
+  private void completeFailure(){
+    //irreparably blocked
+    MapLocation originalAimedFor = this.endDestination;
+    debug_out("Failed to hit destination completely, clearing");
+    this.clearDestination();
+    this.eventSubscriber.onFailingToReachDestination(originalAimedFor);
   }
 
   // The robot controller can automagically scale this,
@@ -241,14 +257,6 @@ public strictfp class Traveller {
     debug_out("Destination List "+mem.toString());
   }
 
-  private void debug_out(String message){
-    debug_out(message, "---> ");
-  }
-
-  private void debug_out(String message, String prepend){
-    if(!this.showDebug) return;
-    System.out.println(prepend+message);
-  }
 
   public void debug_dbgOff(){
     this.showDebug = false;
@@ -258,4 +266,13 @@ public strictfp class Traveller {
     this.showDebug = true;
   }
 
+  public void debug_out(String message){
+    if(!showDebug) return;
+    Debug.debug_out(message);
+  }
+
+  public void debug_out(String message, String prepend){
+    if(!showDebug) return;
+    Debug.debug_out(message, prepend);
+  }
 }

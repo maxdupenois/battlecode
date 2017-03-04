@@ -86,7 +86,7 @@ public strictfp class BoidMovementBehaviour implements MovementInterface, Travel
     RobotInfo[] enemies = filterEnemies(robots);
     MapLocation currentLocation = robotController.getLocation();
 
-    debug_showCurrentDestination();
+    //debug_showCurrentDestination();
 
     checkIfStuck(currentLocation);
 
@@ -121,7 +121,7 @@ public strictfp class BoidMovementBehaviour implements MovementInterface, Travel
       applyEnemySeparation(currentLocation, enemies);
     }
 
-    debug_showNewDestination();
+    //debug_showNewDestination();
 
     traveller.continueToDestination();
 

@@ -13,6 +13,18 @@ public strictfp class GeometryUtil {
     return vector.isWithinRangeOfVector(myLocation, collisionRange);
   }
 
+  //Directions are reduced to sit between -PI -> PI presumably
+  //to make it easier to do the left right checks, this
+  //screws up my sorting however
+  public static float normaliseRadians(float radians){
+    if(radians >= 0){
+      return radians;
+    } else {
+      // If they're negative
+      return ((float) Math.PI * 2f) + radians;
+    }
+  }
+
   public static MapLocation meanLocation(BodyInfo[] bodies){
     float meanX = 0f;
     float meanY = 0f;

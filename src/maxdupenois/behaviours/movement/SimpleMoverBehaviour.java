@@ -1,4 +1,5 @@
 package maxdupenois.behaviours.movement;
+import maxdupenois.behaviours.Behaviour;
 import battlecode.common.MapLocation;
 import battlecode.common.RobotController;
 import battlecode.common.GameActionException;
@@ -6,7 +7,7 @@ import battlecode.common.Direction;
 
 //Not a behaviour, just accepts destinations to move
 //to
-public strictfp class SimpleMoverBehaviour implements MovementInterface, TravellerEventInterface {
+public strictfp class SimpleMoverBehaviour implements Behaviour, TravellerEventInterface {
   private Traveller traveller;
   private RobotController robotController;
   private boolean moving;
@@ -16,14 +17,13 @@ public strictfp class SimpleMoverBehaviour implements MovementInterface, Travell
     this.moving = false;
   }
 
-  public void move() throws GameActionException {
+  public void execute() throws GameActionException {
     if(!traveller.hasDestination() ||
         traveller.hasReachedDestination()) return;
     traveller.continueToDestination();
   }
 
   public void moveTo(MapLocation destination){
-    System.out.println("Moving to "+destination.toString());
     traveller.setDestination(destination);
     this.moving = true;
   }
@@ -37,7 +37,6 @@ public strictfp class SimpleMoverBehaviour implements MovementInterface, Travell
     this.moving = false;
   }
   public void onFailingToReachDestination(MapLocation destination) {
-    System.out.println("Failed to reach destination");
     this.moving = false;
   }
   public void onReachingDiversion(MapLocation destination) {}

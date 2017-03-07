@@ -1,6 +1,7 @@
 package maxdupenois.behaviours.movement;
 
 import static maxdupenois.util.GeometryUtil.*;
+import maxdupenois.behaviours.Behaviour;
 import battlecode.common.MapLocation;
 import battlecode.common.RobotController;
 import battlecode.common.RobotType;
@@ -23,7 +24,7 @@ import java.util.stream.Collectors;
 //The most basic form of movement behaviour,
 //does noting with hooks, simply uses a traveller
 //to head to a location
-public strictfp class BoidMovementBehaviour implements MovementInterface, TravellerEventInterface {
+public strictfp class BoidMovementBehaviour implements Behaviour, TravellerEventInterface {
   private Traveller traveller;
   private RobotController robotController;
   private float range;
@@ -79,7 +80,7 @@ public strictfp class BoidMovementBehaviour implements MovementInterface, Travel
   }
 
 
-  public void move() throws GameActionException {
+  public void execute() throws GameActionException {
     RobotInfo[] robots = this.robotController.senseNearbyRobots();
     BulletInfo[] bullets = this.robotController.senseNearbyBullets();
     RobotInfo[] companions = filterCompanions(robots);

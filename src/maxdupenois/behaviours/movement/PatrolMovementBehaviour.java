@@ -1,11 +1,12 @@
 package maxdupenois.behaviours.movement;
+import maxdupenois.behaviours.Behaviour;
 import battlecode.common.MapLocation;
 import battlecode.common.RobotController;
 import battlecode.common.GameActionException;
 import battlecode.common.Direction;
 
 // Try a rectangular patrol
-public strictfp class PatrolMovementBehaviour implements MovementInterface, TravellerEventInterface {
+public strictfp class PatrolMovementBehaviour implements Behaviour, TravellerEventInterface {
   private Traveller traveller;
   private RobotController robotController;
   private Direction[] directions = new Direction[]{
@@ -36,7 +37,7 @@ public strictfp class PatrolMovementBehaviour implements MovementInterface, Trav
     }
   }
 
-  public void move() throws GameActionException {
+  public void execute() throws GameActionException {
     if(!traveller.hasDestination() || traveller.hasReachedDestination()){
       this.changeDirection();
       MapLocation newLocation = this.

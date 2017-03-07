@@ -1,4 +1,5 @@
 package maxdupenois.behaviours.shooting;
+import maxdupenois.behaviours.Behaviour;
 import battlecode.common.MapLocation;
 import battlecode.common.Direction;
 import battlecode.common.RobotInfo;
@@ -10,17 +11,27 @@ import java.util.Iterator;
 import java.util.function.Predicate;
 import java.util.function.BiConsumer;
 
-public strictfp class NoFriendlyFire {
+public strictfp class NoFriendlyFire implements Behaviour {
   private RobotController rc;
   private Team team;
-  public NoFriendlyFire(RobotController rc, Team team){
-    this.rc = rc;
-    this.team = team;
-  }
+  private Predicate<RobotController> canFireFunc;
+  private BiConsumerThrowsGameException<RobotController, Direction> fireFunc;
 
   public interface BiConsumerThrowsGameException<T, R> {
     public void acceptOrThrow(T t, R r) throws GameActionException;
   }
+
+  public NoFriendlyFire(RobotController rc,
+      Team team,
+      Predicate<RobotController> canFireFunc,
+      BiConsumerThrowsGameException<RobotController, Direction> fireFunc
+      ){
+    this.rc = rc;
+    this.canFireFunc = canFireFunc;
+    this.fireFunc = fireFunc;
+    this.team = team;
+  }
+
 
   private RobotInfo[][] findLocalRobots(){
     RobotInfo[] localRobots = this.rc.senseNearbyRobots();
@@ -40,10 +51,7 @@ public strictfp class NoFriendlyFire {
     };
   }
 
-  public void fire(
-      Predicate<RobotController> canFireFunc,
-      BiConsumerThrowsGameException<RobotController, Direction> fireFunc
-      ) throws GameActionException {
+  public void execute() throws GameActionException {
     RobotInfo[][] localRobots = findLocalRobots();
     RobotInfo[] friendlies = localRobots[0];
     RobotInfo[] enemies = localRobots[1];

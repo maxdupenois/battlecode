@@ -4,11 +4,12 @@ import battlecode.common.RobotController;
 import battlecode.common.GameActionException;
 import battlecode.common.Direction;
 import static maxdupenois.util.GeometryUtil.*;
+import maxdupenois.behaviours.Behaviour;
 
 //The most basic form of movement behaviour,
 //does noting with hooks, simply uses a traveller
 //to head to a location
-public strictfp class SimpleRandomMovementBehaviour implements MovementInterface, TravellerEventInterface {
+public strictfp class SimpleRandomMovementBehaviour implements Behaviour, TravellerEventInterface {
   private Traveller traveller;
   private RobotController robotController;
   private float range;
@@ -29,7 +30,7 @@ public strictfp class SimpleRandomMovementBehaviour implements MovementInterface
         currentDirection, distance);
   }
 
-  public void move() throws GameActionException{
+  public void execute() throws GameActionException{
     traveller.continueToDestination();
   }
 

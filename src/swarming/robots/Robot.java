@@ -1,16 +1,19 @@
 package swarming.robots;
-import maxdupenois.behaviours.movement.MovementInterface;
+import maxdupenois.behaviours.Behaviour;
+import java.util.ArrayList;
+import java.util.Iterator;
 import battlecode.common.*;
 
 public abstract strictfp class Robot {
   protected RobotController rc;
   protected MapLocation currentLocation;
   protected RobotType type;
-  protected MovementInterface movementBehaviour = null;
+  protected ArrayList<Behaviour> behaviours;
 
   public Robot(RobotController rc){
     this.rc = rc;
     this.type = rc.getType();
+    this.behaviours = new ArrayList<Behaviour>();
   }
 
   public void setRobotController(RobotController rc) {
@@ -21,25 +24,31 @@ public abstract strictfp class Robot {
     return this.rc;
   }
 
-  public boolean hasMovementBehaviour(){
-    return this.movementBehaviour != null;
+  public void removeBehaviour(Behaviour b){
+    this.behaviours.remove(b);
   }
 
-  public MovementInterface getMovementBehaviour(){
-    return this.movementBehaviour;
+  public void addBehaviour(Behaviour b){
+    this.behaviours.add(b);
   }
 
-  public void setMovementBehaviour(MovementInterface movementBehaviour){
-    this.movementBehaviour = movementBehaviour;
+  public void switchBehaviour(Behaviour oldB, Behaviour newB){
+    removeBehaviour(oldB);
+    addBehaviour(newB);
+  }
+
+  private void runBehaviours() throws GameActionException {
+    Iterator<Behaviour> iter = behaviours.iterator();
+    while(iter.hasNext()){
+      iter.next().execute();
+    }
   }
 
   public void run() throws GameActionException {
     int remainingBytecodes;
     while(true) {
       this.currentLocation = this.rc.getLocation();
-      if(this.hasMovementBehaviour()){
-        this.movementBehaviour.move();
-      }
+      runBehaviours();
       remainingBytecodes = Clock.getBytecodesLeft();
       if(remainingBytecodes > 0){
         // No point if there's nothing left that can be done

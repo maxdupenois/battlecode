@@ -13,22 +13,24 @@ import maxdupenois.util.Debug;
 public strictfp class Gardener extends Robot {
   private int buildIndex;
   private SimpleMoverBehaviour mover;
+  private SimpleRandomMovementBehaviour randomMover;
   private Direction buildDirection;
   private int startRound;
   private static int TARGET_NUM_TREES = 5;
   private static int MOVEMENT_ROUND_COUNT = 20;
   // Ignore tanks and lumberjacks for the moment
   private RobotType[] buildQueue = new RobotType[]{
-    RobotType.SCOUT, RobotType.SOLDIER, RobotType.SOLDIER
+    RobotType.SOLDIER, RobotType.SOLDIER, RobotType.SCOUT
   };
 
   public Gardener(RobotController rc){
     super(rc);
     this.mover = new SimpleMoverBehaviour(rc);
+    this.randomMover = new SimpleRandomMovementBehaviour(rc, 40f);
     this.buildDirection = Direction.EAST;
     //Start with a simpe random movement, we'll
     //switch to the simple mover later
-    setMovementBehaviour(new SimpleRandomMovementBehaviour(rc, 40f));
+    addBehaviour(randomMover);
     this.startRound = -1;
     this.buildIndex = 0;
   }
@@ -52,25 +54,11 @@ public strictfp class Gardener extends Robot {
     int roundsPassed = round - startRound;
     if(roundsPassed < MOVEMENT_ROUND_COUNT) return;
     if(roundsPassed == MOVEMENT_ROUND_COUNT){
-      setMovementBehaviour(mover);
+      switchBehaviour(randomMover, mover);
     }
     debug_buildDirection();
     build();
     garden();
-    buyVictoryPoints();
-  }
-
-  private static int MIN_BULLETS_TO_DONATE = 100;
-  private void buyVictoryPoints() throws GameActionException {
-    // Only do this if I have at least 100 bullets
-    float bullets = rc.getTeamBullets();
-    if(bullets < MIN_BULLETS_TO_DONATE) return;
-    float cost = rc.getVictoryPointCost();
-    // never spend more than a third of my bullets
-    // because why not;
-    float maxSpend = bullets / 3f;
-    float actSpend = maxSpend - ( maxSpend % cost );
-    rc.donate(actSpend);
   }
 
   private void debug_buildDirection(){

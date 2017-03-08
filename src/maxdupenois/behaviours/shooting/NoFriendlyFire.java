@@ -95,7 +95,9 @@ public strictfp class NoFriendlyFire implements Behaviour {
             friendDirection.equals(enemyDirection, maxDirectionSimilarity)
             );
       }
-      if(!wouldHitFriend) fireFunc.acceptOrThrow(this.rc, enemyDirection);
+      // We need to recheck we can fire as other robots may
+      // have spent bullets in between the above work
+      if(!wouldHitFriend && canFireFunc.test(this.rc)) fireFunc.acceptOrThrow(this.rc, enemyDirection);
     }
   }
 }

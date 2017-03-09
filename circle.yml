@@ -3,9 +3,6 @@ machine:
     version:
       oraclejdk8
 
-#dependencies:
-#  override:
-#    - gradle dependencies
 test:
   post:
     - ./scripts/ci-test.sh

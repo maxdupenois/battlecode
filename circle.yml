@@ -1,4 +1,3 @@
-testt:
-  override:
-    - ./gradlew test
+test:
+  post:
     - ./scripts/ci-test.sh

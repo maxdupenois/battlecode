@@ -2,7 +2,7 @@
 set -e #exit on error
 
 ME="swarming"
-OPPONENTS=("samwho" "ben.one" "examplefuncsplayer")
+OPPONENTS=("samwho" "ben.one" "rybots" "examplefuncsplayer")
 MAPS=("Arena" "Alone")
 
 echo -e "\033[0;35mStarting Tournament\033[0m"

@@ -154,6 +154,9 @@ task run(type: JavaExec, dependsOn: 'build') {
         '-Dbc.server.save-file=' + 'matches/' + project.property('teamA') + '-vs-' + project.property('teamB') + '-on-' + project.property('maps') + '.bc17'
     ]
 }
+task wrapper(type: Wrapper) {
+  gradleVersion = '2.0'
+}
 
 // This task prints out all available players, in the format that the `run`
 // task expects them to be given as.

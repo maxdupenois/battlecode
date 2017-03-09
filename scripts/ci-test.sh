@@ -1,32 +1,62 @@
 #!/bin/bash
 set -e #exit on error
 
-ME="swarming"
-OPPONENTS=("samwho" "ben.one" "rybots" "examplefuncsplayer")
-MAPS=("Arena" "Alone")
+WEBHOOK_URL="https://hooks.slack.com/services/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"
+SLACK_CHANNEL="#battlebots"
 
-echo -e "\033[0;35mStarting Tournament\033[0m"
-echo -e "\033[0;35m-------------------\033[0m"
-for o in ${OPPONENTS[@]}; do
-  for m in ${MAPS[@]}; do
-    echo -e "\033[0;37mVs. ${o} on ${m}\033[0m"
-    COMMAND_A="./gradlew --offline run -PteamA=swarming -PteamB=${o} -Pmaps=${m}"
-    COMMAND_B="./gradlew --offline run -PteamB=swarming -PteamA=${o} -Pmaps=${m}"
-    RESULT_A=`${COMMAND_A} | grep -E -A 1 '\[server\].*wins.*'`
-    RESULT_B=`${COMMAND_B} | grep -E -A 1 '\[server\].*wins.*'`
-    CLEAN_RESULT_A=`echo ${RESULT_A} | sed -E 's/\[server\] *//g'`
-    CLEAN_RESULT_B=`echo ${RESULT_B} | sed -E 's/\[server\] *//g'`
-    if [[ $CLEAN_RESULT_A == *${ME}* ]]; then
-      echo -e "\033[0;36m  A: ${CLEAN_RESULT_A}\033[0m"
-    else
-      echo -e "\033[0;31m  A: ${CLEAN_RESULT_A}\033[0m"
-      echo -e "\033[0;31m     ${COMMAND_A}\033[0m"
-    fi
-    if [[ $CLEAN_RESULT_B == *${ME}* ]]; then
-      echo -e "\033[0;36m  B: ${CLEAN_RESULT_B}\033[0m"
-    else
-      echo -e "\033[0;31m  B: ${CLEAN_RESULT_B}\033[0m"
-      echo -e "\033[0;31m     ${COMMAND_B}\033[0m"
-    fi
+
+BOTS=("swarming" "samwho" "ben.one" "rybots")
+MAPS=("Arena" "Alone")
+RESULTS=""
+
+mkdir -p ./others
+cd others
+if [[ -d ben ]]; then
+  cd ben && git pull --rebase && cd ..
+else
+  git clone https://github.com/benashford/battlecode-2017.git ben
+fi
+
+if [[ -d samwho ]]; then
+  cd samwho && git pull --rebase && cd ..
+else
+  git clone https://github.com/samwho/battlecode-2017.git samwho
+fi
+
+if [[ -d rybots ]]; then
+  cd rybots && git pull --rebase && cd ..
+else
+  git clone https://github.com/Rylon/rybots.git
+fi
+
+cd ../src/
+if [[ -e ben ]]; then rm ben; fi
+if [[ -e rybots ]]; then rm rybots; fi
+if [[ -e samwho ]]; then rm samwho; fi
+
+ln -s ../others/ben/src/ben ./ben
+ln -s ../others/samwho/src/samwho ./samwho
+ln -s ../others/rybots/src/rybots ./rybots
+cd ..
+
+for b1 in ${BOTS[@]}; do
+  for b2 in ${BOTS[@]}; do
+    if [[ $b1 == $b2 ]]; then continue; fi
+    for m in ${MAPS[@]}; do
+      RESULTS="${RESULTS}\n\r${b1} (Team A) Vs. ${b2} (Team B) on ${m}"
+      COMMAND="./gradlew --offline run -PteamA=${b1} -PteamB=${b2} -Pmaps=${m}"
+      RESULT=`${COMMAND} | grep -E -A 1 '\[server\].*wins.*'`
+      CLEAN_RESULT=`echo ${RESULT} | sed -E 's/\[server\] *//g'`
+      if [[ $CLEAN_RESULT == *${b1}* ]]; then
+        RESULTS="${RESULTS}\n\r  *${b1} WINS* ${CLEAN_RESULT}"
+      else
+        RESULTS="${RESULTS}\n\r  *${b1} LOSES* ${CLEAN_RESULT}"
+      fi
+    done
   done
 done
+echo -e $RESULTS
+
+curl -X POST --data-urlencode 'payload={"channel": "#battlebots", "username": "Battlebots Tournament Result", "text": "${RESULTS}", "icon_emoji": ":robot_face:"}' ${WEBHOOK_URL}
+
+

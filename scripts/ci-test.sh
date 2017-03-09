@@ -2,7 +2,7 @@
 set -e #exit on error
 
 WEBHOOK_URL="https://hooks.slack.com/services/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"
-SLACK_CHANNEL="#battlebots"
+SLACK_CHANNEL="#battlecode-results"
 
 
 BOTS=("swarming" "samwho" "ben.one" "rybots")
@@ -59,7 +59,7 @@ for b1 in ${BOTS[@]}; do
 done
 echo -e $RESULTS
 
-payload="payload={\"channel\":\"#battlebots\",
+payload="payload={\"channel\":\"${SLACK_CHANNEL}\",
 \"username\":\"Battlecode Tournament Result\",
 \"icon_emoji\":\":robot_face:\",
 \"text\":\"${RESULTS}\"

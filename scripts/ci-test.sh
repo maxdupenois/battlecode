@@ -50,9 +50,9 @@ for b1 in ${BOTS[@]}; do
       RESULT=`${COMMAND} | grep -E -A 1 '\[server\].*wins.*'`
       CLEAN_RESULT=`echo ${RESULT} | sed -E 's/\[server\] *//g'`
       if [[ $CLEAN_RESULT == *${b1}* ]]; then
-        RESULTS="${RESULTS}\n\r    *WIN* against ${b2} on ${m} :: ${CLEAN_RESULT}"
+        RESULTS="${RESULTS}\n\r    :smile: *WIN * against ${b2} on ${m} :: ${CLEAN_RESULT}"
       else
-        RESULTS="${RESULTS}\n\r    *LOSS* against ${b2} on ${m} :: ${CLEAN_RESULT}"
+        RESULTS="${RESULTS}\n\r    :rage: *LOSS* against ${b2} on ${m} :: ${CLEAN_RESULT}"
       fi
     done
   done
@@ -66,5 +66,3 @@ payload="payload={\"channel\":\"${SLACK_CHANNEL}\",
 }"
 
 curl -X POST --data-urlencode "${payload}" ${WEBHOOK_URL}
-
-

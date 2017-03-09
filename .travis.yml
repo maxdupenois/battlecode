@@ -7,6 +7,9 @@ cache:
   directories:
     - $HOME/.gradle/caches/
     - $HOME/.gradle/wrapper/
+
+install:
+  - gradle assemble
 script:
   - ./scripts/ci-test.sh
 

@@ -41,18 +41,18 @@ cd ..
 echo "Running tournament"
 
 for b1 in ${BOTS[@]}; do
+  RESULTS="${RESULTS}\n\r*Testing ${b1} _(Team A)_*\n\r*-------------*"
   for b2 in ${BOTS[@]}; do
     if [[ $b1 == $b2 ]]; then continue; fi
     for m in ${MAPS[@]}; do
       echo "${b1} vs ${b2} on ${m}"
-      RESULTS="${RESULTS}\n\r${b1} (Team A) Vs. ${b2} (Team B) on ${m}"
       COMMAND="./gradlew run -PteamA=${b1} -PteamB=${b2} -Pmaps=${m}"
       RESULT=`${COMMAND} | grep -E -A 1 '\[server\].*wins.*'`
       CLEAN_RESULT=`echo ${RESULT} | sed -E 's/\[server\] *//g'`
       if [[ $CLEAN_RESULT == *${b1}* ]]; then
-        RESULTS="${RESULTS}\n\r  *${b1} WINS* ${CLEAN_RESULT}"
+        RESULTS="${RESULTS}\n\r    *WIN* against ${b2} on ${m} :: ${CLEAN_RESULT}"
       else
-        RESULTS="${RESULTS}\n\r  *${b1} LOSES* ${CLEAN_RESULT}"
+        RESULTS="${RESULTS}\n\r    *LOSS* against ${b2} on ${m} :: ${CLEAN_RESULT}"
       fi
     done
   done
@@ -62,7 +62,7 @@ echo -e $RESULTS
 payload="payload={\"channel\":\"#battlebots\",
 \"username\":\"Battlecode Tournament Result\",
 \"icon_emoji\":\":robot_face:\",
-\"text\":\"${RESULTS}"
+\"text\":\"${RESULTS}\"
 }"
 
 curl -X POST --data-urlencode "${payload}" ${WEBHOOK_URL}

@@ -46,7 +46,7 @@ for b1 in ${BOTS[@]}; do
     for m in ${MAPS[@]}; do
       echo "${b1} vs ${b2} on ${m}"
       RESULTS="${RESULTS}\n\r${b1} (Team A) Vs. ${b2} (Team B) on ${m}"
-      COMMAND="./gradlew --offline run -PteamA=${b1} -PteamB=${b2} -Pmaps=${m}"
+      COMMAND="./gradlew run -PteamA=${b1} -PteamB=${b2} -Pmaps=${m}"
       RESULT=`${COMMAND} | grep -E -A 1 '\[server\].*wins.*'`
       CLEAN_RESULT=`echo ${RESULT} | sed -E 's/\[server\] *//g'`
       if [[ $CLEAN_RESULT == *${b1}* ]]; then

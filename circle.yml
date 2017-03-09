@@ -2,7 +2,7 @@ machine:
   java:
     version:
       oraclejdk8
-
 test:
   post:
+    - echo "Running post test code"
     - ./scripts/ci-test.sh

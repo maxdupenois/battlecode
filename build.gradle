@@ -154,6 +154,36 @@ task run(type: JavaExec, dependsOn: 'build') {
         '-Dbc.server.save-file=' + 'matches/' + project.property('teamA') + '-vs-' + project.property('teamB') + '-on-' + project.property('maps') + '.bc17'
     ]
 }
+
+// Another task. This one accepts three optional parameters, or "properties",
+// corresponding to the bots used by the two teams, and the map(s) used in this
+// game. These properties can be set in the command line with:
+// On windows:
+//   `gradlew -PteamA=<team A bot> -PteamB=<team B bot> -Pmaps=<comma
+//   separated list of maps>`
+// On OS X and Linux:
+//   `./gradlew -PteamA=<team A bot> -PteamB=<team B bot> -Pmaps=<comma
+//   separated list of maps>`
+task runQuiet(type: JavaExec, dependsOn: 'build') {
+    description 'Runs a match without starting the client and without debug output.'
+    group 'battlecode'
+
+    main = 'battlecode.server.Main'
+    classpath = sourceSets.main.runtimeClasspath
+    args = ['-c=-']
+    jvmArgs = [
+        '-Dbc.server.mode=headless',
+        '-Dbc.server.map-path=maps',
+        '-Dbc.server.debug=false',
+        '-Dbc.engine.debug-methods=false',
+        '-Dbc.game.team-a='+project.property('teamA'),
+        '-Dbc.game.team-b='+project.property('teamB'),
+        '-Dbc.game.team-a.url='+sourceSets.main.output.classesDir,
+        '-Dbc.game.team-b.url='+sourceSets.main.output.classesDir,
+        '-Dbc.game.maps='+project.property('maps'),
+        '-Dbc.server.save-file=' + 'matches/' + project.property('teamA') + '-vs-' + project.property('teamB') + '-on-' + project.property('maps') + '.bc17'
+    ]
+}
 task wrapper(type: Wrapper) {
   gradleVersion = '3.3'
 }

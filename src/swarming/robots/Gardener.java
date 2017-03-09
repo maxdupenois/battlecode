@@ -198,7 +198,6 @@ public strictfp class Gardener extends Robot {
         }
       } else {
         //Damn we've lost our build space, this shouldn't happen
-        System.out.println("AARGH lost build space, attempting to go anywhere else");
         //moveTo(randomDestination(rc.getLocation(), 10f));
       }
     }

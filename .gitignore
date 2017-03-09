@@ -11,9 +11,8 @@
 *.swp
 *.swo
 *.pyc
-.gradle
+.gradle/
 /client/
-*.jar
 *.iml
 *.ipr
 *.iws

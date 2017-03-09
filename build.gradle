@@ -155,7 +155,7 @@ task run(type: JavaExec, dependsOn: 'build') {
     ]
 }
 task wrapper(type: Wrapper) {
-  gradleVersion = '2.0'
+  gradleVersion = '3.3'
 }
 
 // This task prints out all available players, in the format that the `run`

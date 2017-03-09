@@ -44,7 +44,7 @@ for b1 in ${BOTS[@]}; do
     if [[ $b1 == $b2 ]]; then continue; fi
     for m in ${MAPS[@]}; do
       RESULTS="${RESULTS}\n\r${b1} (Team A) Vs. ${b2} (Team B) on ${m}"
-      COMMAND="./gradlew --offline run -PteamA=${b1} -PteamB=${b2} -Pmaps=${m}"
+      COMMAND="gradle --offline run -PteamA=${b1} -PteamB=${b2} -Pmaps=${m}"
       RESULT=`${COMMAND} | grep -E -A 1 '\[server\].*wins.*'`
       CLEAN_RESULT=`echo ${RESULT} | sed -E 's/\[server\] *//g'`
       if [[ $CLEAN_RESULT == *${b1}* ]]; then

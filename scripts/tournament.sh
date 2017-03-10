@@ -52,31 +52,8 @@ for o in ${OPPONENTS[@]}; do
     COMMAND_A=$(buildMatchCommand "swarming" $o $m)
     COMMAND_B=$(buildMatchCommand $o "swarming" $m)
     RESULT_A=$($COMMAND_A)
-    #RESULT_B=$($COMMAND_B)
+    RESULT_B=$($COMMAND_B)
     printResult "${RESULT_A}" "$ME" "A: " "$COMMAND_A"
-    #printResult "${RESULT_B}" "$ME" "B: " "$COMMAND_B"
-    #COMMAND_A="./gradlew --offline runQuiet -PteamA=swarming -PteamB=${o} -Pmaps=${m}"
-    #COMMAND_B="./gradlew --offline runQuiet -PteamB=swarming -PteamA=${o} -Pmaps=${m}"
-    #WIN_LINES="grep -E -A 1 '\[server\].*wins.*'"
-    #TIME_GREP="grep -Eo 'Total time: .*'"
-    #SERVER_STRIP=
-    #RESULT_A=`${COMMAND_A}`
-    #RESULT_B=`${COMMAND_B}`
-    #CLEAN_RESULT_A=`echo ${RESULT_A} | ${WIN_LINES} | sed -E 's/\[server\] *//g'`
-    #CLEAN_RESULT_B=`echo ${RESULT_B} | eval ${WIN_LINES} | sed -E 's/\[server\] *//g'`
-    #TIME_A=`echo ${RESULT_A} | ${TIME_GREP}`
-    #TIME_B=`echo ${RESULT_B} | ${TIME_GREP}`
-    #if [[ $CLEAN_RESULT_A == *${ME}* ]]; then
-    #  echo -e "\033[0;36m  A: ${CLEAN_RESULT_A} (${TIME_A})\033[0m"
-    #else
-    #  echo -e "\033[0;31m  A: ${CLEAN_RESULT_A} (${TIME_A})\033[0m"
-    #  echo -e "\033[0;31m     ${COMMAND_A}\033[0m"
-    #fi
-    #if [[ $CLEAN_RESULT_B == *${ME}* ]]; then
-    #  echo -e "\033[0;36m  B: ${CLEAN_RESULT_B} (${TIME_B})\033[0m"
-    #else
-    #  echo -e "\033[0;31m  B: ${CLEAN_RESULT_B} (${TIME_B})\033[0m"
-    #  echo -e "\033[0;31m     ${COMMAND_B}\033[0m"
-    #fi
+    printResult "${RESULT_B}" "$ME" "B: " "$COMMAND_B"
   done
 done

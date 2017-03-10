@@ -94,24 +94,15 @@ for b1 in ${BOTS[@]}; do
       else
         RESULTS="${RESULTS}\n\r    :rage: *LOSS* against ${b2} on ${m} :: ${SUMMARY}"
       fi
-
-      #COMMAND="./gradlew runQuiet -PteamA=${b1} -PteamB=${b2} -Pmaps=${m}"
-      #RESULT=`${COMMAND} | grep -E -A 1 '\[server\].*wins.*'`
-      #CLEAN_RESULT=`echo ${RESULT} | sed -E 's/\[server\] *//g'`
-      #if [[ $CLEAN_RESULT == *${b1}* ]]; then
-      #  RESULTS="${RESULTS}\n\r    :smile: *WIN * against ${b2} on ${m} :: ${CLEAN_RESULT}"
-      #else
-      #  RESULTS="${RESULTS}\n\r    :rage: *LOSS* against ${b2} on ${m} :: ${CLEAN_RESULT}"
-      #fi
     done
   done
 done
 echo -e $RESULTS
 
-#payload="payload={\"channel\":\"${SLACK_CHANNEL}\",
-#\"username\":\"Battlecode Tournament Result\",
-#\"icon_emoji\":\":robot_face:\",
-#\"text\":\"${RESULTS}\"
-#}"
-#
-#curl -X POST --data-urlencode "${payload}" ${WEBHOOK_URL}
+payload="payload={\"channel\":\"${SLACK_CHANNEL}\",
+\"username\":\"Battlecode Tournament Result\",
+\"icon_emoji\":\":robot_face:\",
+\"text\":\"${RESULTS}\"
+}"
+
+curl -X POST --data-urlencode "${payload}" ${WEBHOOK_URL}

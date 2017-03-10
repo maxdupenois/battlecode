@@ -10,8 +10,8 @@ echo -e "\033[0;35m-------------------\033[0m"
 for o in ${OPPONENTS[@]}; do
   for m in ${MAPS[@]}; do
     echo -e "\033[0;37mVs. ${o} on ${m}\033[0m"
-    COMMAND_A="gradle --offline runQuiet -PteamA=swarming -PteamB=${o} -Pmaps=${m}"
-    COMMAND_B="gradle --offline runQuiet -PteamB=swarming -PteamA=${o} -Pmaps=${m}"
+    COMMAND_A="./gradlew --offline runQuiet -PteamA=swarming -PteamB=${o} -Pmaps=${m}"
+    COMMAND_B="./gradlew --offline runQuiet -PteamB=swarming -PteamA=${o} -Pmaps=${m}"
     RESULT_A=`${COMMAND_A} | grep -E -A 1 '\[server\].*wins.*'`
     RESULT_B=`${COMMAND_B} | grep -E -A 1 '\[server\].*wins.*'`
     CLEAN_RESULT_A=`echo ${RESULT_A} | sed -E 's/\[server\] *//g'`

@@ -8,7 +8,7 @@ public strictfp class Archon extends Robot {
   private static float ALLOWED_PROPORTION_OF_BULLETS_TO_DONATE = 0.33f;
   public Archon(RobotController rc){
     super(rc);
-    addBehaviour(new PatrolMovementBehaviour(rc, 20f));
+    addBeforeMoveBehaviour(new PatrolMovementBehaviour(rc, 20f, traveller));
     this.numberOfArchons = rc.getInitialArchonLocations(rc.getTeam()).length;
   }
 

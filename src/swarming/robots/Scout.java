@@ -10,10 +10,10 @@ public strictfp class Scout extends Robot {
   public Scout(RobotController rc){
     super(rc);
     this.team = rc.getTeam();
-    addBehaviour(new BoidMovementBehaviour(
-          rc, RobotType.SCOUT, 30f
-          ));
-    addBehaviour(new NoFriendlyFire(
+    //addBeforeMoveBehaviour(new BoidMovementBehaviour(
+    //      rc, RobotType.SCOUT, 30f, traveller
+    //      ));
+    addAfterMoveBehaviour(new NoFriendlyFire(
         rc, team,
         (rbt) -> rbt.canFireSingleShot(),
         (rbt, dir) -> rbt.fireSingleShot(dir)

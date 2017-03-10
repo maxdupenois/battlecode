@@ -1,5 +1,4 @@
 package swarming.robots;
-import maxdupenois.behaviours.movement.SimpleMoverBehaviour;
 import maxdupenois.behaviours.movement.SimpleRandomMovementBehaviour;
 import maxdupenois.util.Trees;
 import static maxdupenois.util.GeometryUtil.randomDestination;
@@ -12,7 +11,6 @@ import maxdupenois.util.Debug;
 
 public strictfp class Gardener extends Robot {
   private int buildIndex;
-  private SimpleMoverBehaviour mover;
   private SimpleRandomMovementBehaviour randomMover;
   private Direction buildDirection;
   private int startRound;
@@ -25,12 +23,11 @@ public strictfp class Gardener extends Robot {
 
   public Gardener(RobotController rc){
     super(rc);
-    this.mover = new SimpleMoverBehaviour(rc);
-    this.randomMover = new SimpleRandomMovementBehaviour(rc, 40f);
+    this.randomMover = new SimpleRandomMovementBehaviour(rc, 40f, traveller);
     this.buildDirection = Direction.EAST;
     //Start with a simpe random movement, we'll
-    //switch to the simple mover later
-    addBehaviour(randomMover);
+    //switch to basic movement later
+    addBeforeMoveBehaviour(randomMover);
     this.startRound = -1;
     this.buildIndex = 0;
   }
@@ -54,7 +51,7 @@ public strictfp class Gardener extends Robot {
     int roundsPassed = round - startRound;
     if(roundsPassed < MOVEMENT_ROUND_COUNT) return;
     if(roundsPassed == MOVEMENT_ROUND_COUNT){
-      switchBehaviour(randomMover, mover);
+      removeBeforeMoveBehaviour(randomMover);
     }
     debug_buildDirection();
     build();
@@ -213,11 +210,11 @@ public strictfp class Gardener extends Robot {
   }
 
   private boolean isMoving(){
-    return mover.isMoving();
+    return traveller.hasDestination();
   }
 
   private void moveTo(MapLocation location){
-    mover.moveTo(location);
+    traveller.setDestination(location);
   }
 
   private void build() throws GameActionException {

@@ -17,12 +17,13 @@ public strictfp class PatrolMovementBehaviour implements Behaviour, TravellerEve
   private MapLocation initialLocation;
   private float range;
 
-  public PatrolMovementBehaviour(RobotController robotController, float range){
-    this.traveller = new Traveller(this, robotController);
+  public PatrolMovementBehaviour(RobotController robotController, float range, Traveller traveller){
+    this.traveller = traveller;
     this.robotController = robotController;
     this.directionIndex = -1;
     this.range = range;
     this.initialLocation = robotController.getLocation();
+    traveller.subscribe(this);
   }
 
   private Direction currentDirection(){
@@ -46,7 +47,6 @@ public strictfp class PatrolMovementBehaviour implements Behaviour, TravellerEve
         add(this.currentDirection(), this.range);
       traveller.setDestination(newLocation);
     }
-    traveller.continueToDestination();
   }
 
   // Movement Interface methods

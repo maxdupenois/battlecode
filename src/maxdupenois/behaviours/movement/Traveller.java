@@ -5,6 +5,7 @@ import battlecode.common.GameActionException;
 import battlecode.common.RobotController;
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.function.Consumer;
 import maxdupenois.util.Debug;
 
 public strictfp class Traveller {
@@ -17,34 +18,38 @@ public strictfp class Traveller {
   // where we go back and forth between locations
   // we've already hit
   private ArrayList<MapLocation> locationHistory;
-  private TravellerEventInterface eventSubscriber;
+  private ArrayList<TravellerEventInterface> eventSubscribers;
   private RobotController robotController;
   private float strideRadius;
   private boolean showDebug;
   private int robotID;
   private int stuckCount;
 
-  public Traveller(
-      TravellerEventInterface eventSubscriber,
-      RobotController robotController
-      ){
-    this(eventSubscriber, robotController, 5f);
+  public Traveller(RobotController robotController){
+    this(robotController, 5f);
   }
 
   public Traveller(
-      TravellerEventInterface eventSubscriber,
       RobotController robotController,
       float closeEnoughDistance
       ){
     this.closeEnoughDistance = closeEnoughDistance;
     this.destination = null;
     this.endDestination = null;
-    this.eventSubscriber = eventSubscriber;
+    this.eventSubscribers = new ArrayList<TravellerEventInterface>();
     this.robotController = robotController;
     this.strideRadius = this.robotController.getType().strideRadius;
     this.showDebug = false;
     this.locationHistory = new ArrayList<MapLocation>();
     this.robotID = this.robotController.getID();
+  }
+
+  public void subscribe(TravellerEventInterface subscriber){
+    eventSubscribers.add(subscriber);
+  }
+
+  public void unsubscribe(TravellerEventInterface subscriber){
+    eventSubscribers.remove(subscriber);
   }
 
   // Used in testing so we're not beholden to
@@ -72,6 +77,10 @@ public strictfp class Traveller {
     this.locationHistory.clear();
   }
 
+  public boolean hasNoDestinationOrHasFinished(){
+    return !hasDestination() || hasReachedDestination();
+  }
+
   public boolean hasDestination(){
     return this.destination != null;
   }
@@ -81,6 +90,13 @@ public strictfp class Traveller {
         this.destination == null &&
         this.endDestination != null
         );
+  }
+
+  public Direction getDirection(){
+    if(!hasDestination()) return null;
+    return robotController.
+        getLocation().
+        directionTo(destination);
   }
 
   // We can't see enough of the map without prohibitive cost
@@ -135,8 +151,8 @@ public strictfp class Traveller {
 
   private void findNewNode(
       MapLocation currentLocation, MapLocation scaledDestination, Direction currentDirection) throws GameActionException{
-    this.eventSubscriber.onNeedingToDivert(scaledDestination);
-    if(!this.robotController.onTheMap(scaledDestination)) this.eventSubscriber.onMapBoundaryFound(scaledDestination);
+    notifyOfNeedToDivert(scaledDestination);
+    if(!this.robotController.onTheMap(scaledDestination)) notifyOfMapBoundaryFound(scaledDestination);
     MapLocation newDestination = null;
 
     // lets assume I have a direction heading towards my
@@ -176,7 +192,7 @@ public strictfp class Traveller {
       degrees += degreeDifference;
     }
     if(newDestination != null) {
-      this.eventSubscriber.onDiversion(newDestination);
+      notifyOfDiversion(newDestination);
       this.destination = newDestination;
       debug_out("Found diversion "+newDestination.toString()+" with score "+maxScore);
       debug_printDestinations();
@@ -190,7 +206,7 @@ public strictfp class Traveller {
     MapLocation originalAimedFor = this.endDestination;
     debug_out("Failed to hit destination completely, clearing");
     this.clearDestination();
-    this.eventSubscriber.onFailingToReachDestination(originalAimedFor);
+    notifyOfFailingToReachDestination(originalAimedFor);
   }
 
   // The robot controller can automagically scale this,
@@ -232,16 +248,45 @@ public strictfp class Traveller {
     if(this.isDiverted()){
       //end diversion
       this.destination = this.endDestination;
-      this.eventSubscriber.onReachingDiversion(currentDestination);
+      notifyOfReachingDiversion(currentDestination);
     } else {
       //end destination reached
       this.destination = null;
-      this.eventSubscriber.onReachingDestination(currentDestination);
+      notifyOfReachingDestination(currentDestination);
     }
     debug_out("Close enough to "+currentDestination);
     debug_printDestinations();
 
     return true;
+  }
+
+  private void notifySubscribers(Consumer<TravellerEventInterface> func){
+    Iterator<TravellerEventInterface> iter = eventSubscribers.iterator();
+    while(iter.hasNext()) func.accept(iter.next());
+  }
+
+  private void notifyOfNeedToDivert(MapLocation location){
+    notifySubscribers((sub) -> sub.onNeedingToDivert(location));
+  }
+
+  private void notifyOfMapBoundaryFound(MapLocation location){
+    notifySubscribers((sub) -> sub.onMapBoundaryFound(location));
+  }
+
+  private void notifyOfReachingDestination(MapLocation location){
+    notifySubscribers((sub) -> sub.onReachingDestination(location));
+  }
+
+  private void notifyOfFailingToReachDestination(MapLocation location){
+    notifySubscribers((sub) -> sub.onFailingToReachDestination(location));
+  }
+
+  private void notifyOfReachingDiversion(MapLocation location){
+    notifySubscribers((sub) -> sub.onReachingDiversion(location));
+  }
+
+  private void notifyOfDiversion(MapLocation location){
+    notifySubscribers((sub) -> sub.onDiversion(location));
   }
 
   public void debug_printDestinations(){

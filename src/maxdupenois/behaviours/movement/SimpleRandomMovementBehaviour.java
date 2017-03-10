@@ -15,11 +15,12 @@ public strictfp class SimpleRandomMovementBehaviour implements Behaviour, Travel
   private float range;
   private Direction currentDirection;
 
-  public SimpleRandomMovementBehaviour(RobotController robotController, float range){
-    this.traveller = new Traveller(this, robotController);
+  public SimpleRandomMovementBehaviour(RobotController robotController, float range, Traveller traveller){
+    this.traveller = traveller;
     this.robotController = robotController;
     this.range =range;
     this.currentDirection = randomDirection();
+    traveller.subscribe(this);
     traveller.setDestination(randomDestination());
   }
 
@@ -31,7 +32,6 @@ public strictfp class SimpleRandomMovementBehaviour implements Behaviour, Travel
   }
 
   public void execute() throws GameActionException{
-    traveller.continueToDestination();
   }
 
   // Movement Interface methods

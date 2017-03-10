@@ -63,8 +63,8 @@ public strictfp class BoidMovementBehaviour implements Behaviour, TravellerEvent
   private static int MAX_STUCK_COUNT=2;
   private static int MOVES_TO_CLEAR_BEING_STUCK = 6;
 
-  public BoidMovementBehaviour(RobotController robotController, RobotType groupingType, float range){
-    this.traveller = new Traveller(this, robotController);
+  public BoidMovementBehaviour(RobotController robotController, RobotType groupingType, float range, Traveller traveller){
+    this.traveller = traveller;
     this.robotController = robotController;
     this.groupingType = groupingType;
     this.team = robotController.getTeam();
@@ -72,6 +72,7 @@ public strictfp class BoidMovementBehaviour implements Behaviour, TravellerEvent
     this.previousCompanionLocations = new HashMap<Integer, MapLocation>();
     this.stuckCount = 0;
     this.clearStuckCount = 0;
+    traveller.subscribe(this);
   }
 
   public void onMapBoundaryFound(MapLocation destination) {
@@ -124,7 +125,6 @@ public strictfp class BoidMovementBehaviour implements Behaviour, TravellerEvent
 
     //debug_showNewDestination();
 
-    traveller.continueToDestination();
 
     this.previousCompanionLocations = buildPreviousCompanionLocations(companions);
     this.previousLocation = currentLocation;

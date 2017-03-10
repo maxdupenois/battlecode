@@ -22,8 +22,9 @@ public class TravellerTest {
     }, new MapLocation(2, 1));
     eventSubscriber = new DummyTravellerSubscriber();
     traveller = new Traveller(
-        eventSubscriber, robotController, 0.9f
+        robotController, 0.9f
         );
+    traveller.subscribe(eventSubscriber);
     // Enough to go diagonally but not
     // jump a square
     traveller.setStrideRadius(1.49f);

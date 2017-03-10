@@ -1,6 +1,6 @@
 package swarming.robots;
-import maxdupenois.behaviours.movement.BoidMovementBehaviour;
-import maxdupenois.behaviours.movement.SimpleRandomMovementBehaviour;
+import maxdupenois.behaviours.movement.BasicHunterBehaviour;
+import maxdupenois.behaviours.movement.SimpleBulletAvoidanceBehaviour;
 import maxdupenois.behaviours.shooting.NoFriendlyFire;
 import battlecode.common.*;
 
@@ -12,10 +12,13 @@ public strictfp class Soldier extends Robot {
   public Soldier(RobotController rc){
     super(rc);
     this.team = rc.getTeam();
-    addBehaviour(new SimpleRandomMovementBehaviour(
-          rc, 30f
+    addBeforeMoveBehaviour(new BasicHunterBehaviour(
+          rc, 20f, traveller
           ));
-    addBehaviour(new NoFriendlyFire(
+    addBeforeMoveBehaviour(new SimpleBulletAvoidanceBehaviour(
+          rc, traveller
+          ));
+    addAfterMoveBehaviour(new NoFriendlyFire(
         rc, team,
         (rbt) -> rbt.canFireSingleShot(),
         (rbt, dir) -> rbt.fireSingleShot(dir)

@@ -1,19 +1,24 @@
 package swarming.robots;
 import maxdupenois.behaviours.Behaviour;
+import maxdupenois.behaviours.movement.Traveller;
 import java.util.ArrayList;
 import java.util.Iterator;
 import battlecode.common.*;
 
 public abstract strictfp class Robot {
+  protected Traveller traveller;
   protected RobotController rc;
   protected MapLocation currentLocation;
   protected RobotType type;
-  protected ArrayList<Behaviour> behaviours;
+  protected ArrayList<Behaviour> beforeMoveBehaviours;
+  protected ArrayList<Behaviour> afterMoveBehaviours;
 
   public Robot(RobotController rc){
     this.rc = rc;
     this.type = rc.getType();
-    this.behaviours = new ArrayList<Behaviour>();
+    this.beforeMoveBehaviours = new ArrayList<Behaviour>();
+    this.afterMoveBehaviours = new ArrayList<Behaviour>();
+    this.traveller = new Traveller(rc, 2f);
   }
 
   public void setRobotController(RobotController rc) {
@@ -24,20 +29,33 @@ public abstract strictfp class Robot {
     return this.rc;
   }
 
-  public void removeBehaviour(Behaviour b){
-    this.behaviours.remove(b);
+  public void removeBeforeMoveBehaviour(Behaviour b){
+    this.beforeMoveBehaviours.remove(b);
   }
 
-  public void addBehaviour(Behaviour b){
-    this.behaviours.add(b);
+  public void addBeforeMoveBehaviour(Behaviour b){
+    this.beforeMoveBehaviours.add(b);
   }
 
-  public void switchBehaviour(Behaviour oldB, Behaviour newB){
-    removeBehaviour(oldB);
-    addBehaviour(newB);
+  public void switchBeforeMoveBehaviour(Behaviour oldB, Behaviour newB){
+    removeBeforeMoveBehaviour(oldB);
+    addBeforeMoveBehaviour(newB);
   }
 
-  private void runBehaviours() throws GameActionException {
+  public void removeAfterMoveBehaviour(Behaviour b){
+    this.afterMoveBehaviours.remove(b);
+  }
+
+  public void addAfterMoveBehaviour(Behaviour b){
+    this.afterMoveBehaviours.add(b);
+  }
+
+  public void switchAfterMoveBehaviour(Behaviour oldB, Behaviour newB){
+    removeAfterMoveBehaviour(oldB);
+    addAfterMoveBehaviour(newB);
+  }
+
+  private void runBehaviours(ArrayList<Behaviour> behaviours) throws GameActionException {
     Iterator<Behaviour> iter = behaviours.iterator();
     while(iter.hasNext()){
       iter.next().execute();
@@ -48,7 +66,9 @@ public abstract strictfp class Robot {
     int remainingBytecodes;
     while(true) {
       this.currentLocation = this.rc.getLocation();
-      runBehaviours();
+      runBehaviours(beforeMoveBehaviours);
+      if(traveller.hasDestination()) traveller.continueToDestination();
+      runBehaviours(afterMoveBehaviours);
       remainingBytecodes = Clock.getBytecodesLeft();
       if(remainingBytecodes > 0){
         // No point if there's nothing left that can be done

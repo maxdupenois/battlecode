@@ -13,7 +13,7 @@ public strictfp class Soldier extends Robot {
     super(rc);
     this.team = rc.getTeam();
     addBeforeMoveBehaviour(new BasicHunterBehaviour(
-          rc, 20f, traveller
+          rc, 30f, traveller
           ));
     addBeforeMoveBehaviour(new SimpleBulletAvoidanceBehaviour(
           rc, traveller

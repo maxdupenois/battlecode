@@ -1,4 +1,5 @@
 package swarming.robots;
+import maxdupenois.behaviours.Behaviour;
 import maxdupenois.behaviours.movement.SimpleRandomMovementBehaviour;
 import maxdupenois.util.Trees;
 import static maxdupenois.util.GeometryUtil.randomDestination;
@@ -7,13 +8,14 @@ import battlecode.common.*;
 
 import java.util.Arrays;
 import java.util.ArrayList;
+import java.util.Iterator;
 import maxdupenois.util.Debug;
 
 public strictfp class Gardener extends Robot {
   private int buildIndex;
   private SimpleRandomMovementBehaviour randomMover;
   private Direction buildDirection;
-  private int startRound;
+  private int startMovingRound;
   private static int TARGET_NUM_TREES = 5;
   private static int MOVEMENT_ROUND_COUNT = 20;
   // Ignore tanks and lumberjacks for the moment
@@ -28,7 +30,7 @@ public strictfp class Gardener extends Robot {
     //Start with a simpe random movement, we'll
     //switch to basic movement later
     addBeforeMoveBehaviour(randomMover);
-    this.startRound = -1;
+    this.startMovingRound = -1;
     this.buildIndex = 0;
   }
 
@@ -44,18 +46,21 @@ public strictfp class Gardener extends Robot {
   // producer, ideally we want them planting (or claiming)
   // and creating new robots pretty constantly
   void takeTurn(int round, int remainingBytecodes) throws GameActionException {
-    if(startRound < 0) startRound = round;
+    if(startMovingRound < 0) startMovingRound = round;
 
     // Don't start trying to garden till we've
     // moved around a bit
-    int roundsPassed = round - startRound;
+    int roundsPassed = round - startMovingRound;
     if(roundsPassed < MOVEMENT_ROUND_COUNT) return;
     if(roundsPassed == MOVEMENT_ROUND_COUNT){
       removeBeforeMoveBehaviour(randomMover);
+      traveller.clearDestination();
     }
-    debug_buildDirection();
-    build();
-    garden();
+    if(!isMoving()){
+      debug_buildDirection();
+      build();
+      garden();
+    }
   }
 
   private void debug_buildDirection(){
@@ -195,7 +200,7 @@ public strictfp class Gardener extends Robot {
         }
       } else {
         //Damn we've lost our build space, this shouldn't happen
-        //moveTo(randomDestination(rc.getLocation(), 10f));
+        moveTo(randomDestination(rc.getLocation(), 10f));
       }
     }
   }
@@ -214,6 +219,7 @@ public strictfp class Gardener extends Robot {
   }
 
   private void moveTo(MapLocation location){
+    startMovingRound = -1;
     traveller.setDestination(location);
   }
 

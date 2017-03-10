@@ -4,6 +4,7 @@ import maxdupenois.behaviours.movement.PatrolMovementBehaviour;
 
 public strictfp class Archon extends Robot {
   private int numberOfArchons;
+  //private int gardeners = 0;
   private static int MIN_BULLETS_AFTER_DONATION = 200;
   private static float ALLOWED_PROPORTION_OF_BULLETS_TO_DONATE = 0.33f;
   public Archon(RobotController rc){
@@ -19,8 +20,14 @@ public strictfp class Archon extends Robot {
     Direction dir = new Direction(
         (float)Math.random() * 2 * (float)Math.PI
         );
-    if(this.rc.isBuildReady() && this.rc.canHireGardener(dir)){
+    //To not build millions of gardeners we'll
+    //only build when the round is an odd number
+    boolean buildableRound = round % 2 == 1;
+    if(buildableRound &&
+        this.rc.isBuildReady() &&
+        this.rc.canHireGardener(dir)){
       this.rc.hireGardener(dir);
+      //gardeners++;
     }
     buyVictoryPoints();
   }
